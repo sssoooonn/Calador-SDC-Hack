@@ -1226,7 +1226,7 @@ def render_team_mode(jobs_df, role_df, skill_df, signals, bg_w):
 # =====================================================================
 # 页面开始（侧边栏：语言、低流量模式放最前面）
 # =====================================================================
-lang_name = st.sidebar.selectbox("Language / 语言 / Bahasa", list(LANGS), index=2, key="lang")
+lang_name = st.sidebar.selectbox("Language / 语言 / Bahasa", list(LANGS), index=0, key="lang")
 LANG = LANGS[lang_name]
 LITE = st.sidebar.checkbox(t("lite"), key="lite")
 inject_css(LITE)
