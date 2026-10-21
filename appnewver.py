@@ -112,15 +112,15 @@ TXT = {
     "cv_fail": ("CV 读取失败：{e}", "Could not read the CV: {e}", "Gagal membaca CV: {e}"),
     # ---- 雷达 ----
     "h_radar": ("📡 未来技能雷达", "📡 Future Skills Radar", "📡 Radar Kemahiran Masa Depan"),
-    "radar_nodata": ("数据集缺少 posting_year 列，无法计算上升 / 降温趋势。",
+    "radar_nodata": ("数据集缺少 posting_year 列，无法计算上升 / 下降趋势。",
                      "The dataset has no posting_year column, so rising/cooling trends cannot be computed.",
                      "Set data tiada lajur posting_year, trend meningkat/menurun tidak dapat dikira."),
     "radar_method": (
-        "方法：比较同一数据集中 2025 年（{n25} 条）与 2026 年（{n26} 条）招聘记录里，各岗位 / 各技能所占份额的变化。蓝色 = 份额上升，橙色 = 份额下降（相对降温，不等于招聘总量减少）。注意：2026 年数据只覆盖 1–3 月，且单个岗位样本量较小（每年约 20–50 条），结论仅为趋势信号，不是预测。",
+        "方法：比较同一数据集中 2025 年（{n25} 条）与 2026 年（{n26} 条）招聘记录里，各岗位 / 各技能所占份额的变化。蓝色 = 份额上升，橙色 = 份额下降（相对下降，不等于招聘总量减少）。注意：2026 年数据只覆盖 1–3 月，且单个岗位样本量较小（每年约 20–50 条），结论仅为趋势信号，不是预测。",
         "Method: compare the share of each role / skill among the {n25} job records of 2025 and the {n26} records of 2026 in the same dataset. Blue = share rising, orange = share falling (relative cooling, not necessarily fewer jobs). Note: 2026 data only covers Jan–Mar and each role has a small sample (about 20–50 records per year), so results are trend signals, not forecasts.",
         "Kaedah: bandingkan bahagian setiap jawatan / kemahiran antara {n25} rekod 2025 dan {n26} rekod 2026 dalam set data yang sama. Biru = bahagian meningkat, jingga = bahagian menurun (penyejukan relatif, bukan semestinya pekerjaan berkurang). Nota: data 2026 hanya meliputi Jan–Mac dan sampel setiap jawatan kecil (kira-kira 20–50 rekod setahun), jadi keputusan ialah isyarat trend, bukan ramalan."),
-    "radar_roles": ("岗位：份额上升 / 降温", "Roles: rising / cooling share", "Jawatan: bahagian meningkat / menurun"),
-    "radar_skills": ("技能：份额上升 / 降温（各取前 10）", "Skills: rising / cooling share (top 10 each)",
+    "radar_roles": ("岗位：份额上升 / 下降", "Roles: rising / cooling share", "Jawatan: bahagian meningkat / menurun"),
+    "radar_skills": ("技能：份额上升 / 下降（各取前 10）", "Skills: rising / cooling share (top 10 each)",
                      "Kemahiran: bahagian meningkat / menurun (10 teratas setiap satu)"),
     "axis_shift": ("招聘占比变化（百分点，2025 → 2026）", "Change in share of postings (percentage points, 2025 → 2026)",
                    "Perubahan bahagian iklan (mata peratusan, 2025 → 2026)"),
@@ -136,11 +136,11 @@ TXT = {
     "col_g_role": ("数据集年增长率(%)", "Dataset YoY growth (%)", "Pertumbuhan YoY set data (%)"),
     "col_g_skill": ("相关岗位平均增长率(%)", "Avg growth of related roles (%)", "Purata pertumbuhan jawatan berkaitan (%)"),
     "up": ("📈 上升", "📈 Rising", "📈 Meningkat"),
-    "down": ("📉 降温", "📉 Cooling", "📉 Menurun"),
+    "down": ("📉 下降", "📉 Cooling", "📉 Menurun"),
     "flat": ("➖ 持平", "➖ Flat", "➖ Mendatar"),
     "your_pos": ("**🧭 你的技能在雷达上的位置**", "**🧭 Where your skills sit on the radar**", "**🧭 Kedudukan kemahiran anda pada radar**"),
     "pos_up": ("📈 上升：{s}", "📈 Rising: {s}", "📈 Meningkat: {s}"),
-    "pos_down": ("📉 降温：{s}", "📉 Cooling: {s}", "📉 Menurun: {s}"),
+    "pos_down": ("📉 下降：{s}", "📉 Cooling: {s}", "📉 Menurun: {s}"),
     "pos_flat": ("➖ 持平：{s}", "➖ Flat: {s}", "➖ Mendatar: {s}"),
     "none": ("暂无", "none", "tiada"),
     "col_heat": ("arXiv 研究热度（篇数/总篇数）", "arXiv research heat (papers/total)", "Haba penyelidikan arXiv (kertas/jumlah)"),
@@ -424,7 +424,7 @@ def clean(v):
 # 外观：配色 / 字体 / CSS
 # =====================================================================
 NAVY, BLUE, ORANGE, LINE = "#36425F", "#2F73B8", "#F5A33A", "#D5DCE4"
-UP_C, DOWN_C = BLUE, ORANGE   # 上升 = 蓝，降温 = 橙
+UP_C, DOWN_C = BLUE, ORANGE   # 上升 = 蓝，下降 = 橙
 FONT = '"Barlow","Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif'
 DISPLAY = '"Oswald","Arial Narrow","Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif'
 
@@ -671,7 +671,7 @@ def load_data():
 
 
 # =====================================================================
-# 未来技能雷达：用数据集 2025 vs 2026 的招聘占比变化判断上升 / 降温
+# 未来技能雷达：用数据集 2025 vs 2026 的招聘占比变化判断上升 / 下降
 # =====================================================================
 def trend_status(v, thr):
     if v >= thr:
@@ -1386,13 +1386,11 @@ with tab_me:
             elif cv_text:
                 st.info(t("cv_none"))
 
-    st.markdown("---")
-    # ---------- 2. 未来技能雷达 ----------
-    render_radar(role_df, skill_df, trend_meta, user_skills, signals)
+        st.markdown("---")
 
-    st.markdown("---")
-    if st.button(t("btn_run"), type="primary"):
-        st.session_state["run"] = True
+        # 点击一次后用 session_state 记住，之后切换岗位 / 勾选进度都不会让结果消失
+        if st.button(t("btn_run"), type="primary"):
+            st.session_state["run"] = True
 
         if st.session_state.get("run"):
             st.header(t("h_match"))
@@ -1401,7 +1399,7 @@ with tab_me:
             res_all = match_roles(user_skills, user_role, jobs_df, signals, role_shift, BG_W)
             top = res_all.head(3)
 
-            # 自动重新规划：对比“不含趋势信号”和“含趋势信号”的推荐
+            # 自动重新规划：对比"不含趋势信号"和"含趋势信号"的推荐
             before, after = base_top(res_all), top["job_title"].tolist()
             if before != after:
                 st.info(t("replan_changed", old=" → ".join(before), new=" → ".join(after)))
@@ -1440,7 +1438,7 @@ with tab_me:
                 st.markdown(t("sdg_chain", title=title, sdg=sdg_label(sdgs), desc=sdg_desc)
                             + (t("sdg_industry", s=ind_txt) if ind_txt else ""))
 
-            # ---- 4. 再培训路径 + 学习进度与徽章 ----
+            # ---- 再培训路径 + 学习进度与徽章 ----
             steps, total, weeks, ph, cvh = build_plan(row["missing"], weekly_hours, skill_df, signals)
             with st.expander(t("plan_title", title=title, total=total, weeks=weeks)):
                 st.write(t("plan_time", total=total, wh=weekly_hours, weeks=weeks))
@@ -1469,51 +1467,51 @@ with tab_me:
                 done_flags.append(ok)
                 done_hours += cvh if ok else 0
 
-                    n_done, n_all = sum(done_flags), len(done_flags)
-                    st.markdown(t("prog_title"))
-                    st.progress(n_done / n_all)
-                    st.caption(t("prog_text", d=n_done, n=n_all, h=max(0, total - done_hours)))
-                    badges = [t("badge_skill", s=s_) for s_ in skill_badges]
-                    if n_done >= 1:
-                        badges.append(t("badge_start"))
-                    if learn_done == len(steps):
-                        badges.append(t("badge_builder"))
-                    if n_done == n_all:
-                        badges.append(t("badge_ready"))
-                    st.write("  \n".join(badges) if badges else t("badge_none"))
-                    st.caption(t("plan_cap", p=learn_pref, g=growth_mindset))
-                    st.caption(t("plan_note"))
-                    st.markdown(t("hrd"))
+                n_done, n_all = sum(done_flags), len(done_flags)
+                st.markdown(t("prog_title"))
+                st.progress(n_done / n_all)
+                st.caption(t("prog_text", d=n_done, n=n_all, h=max(0, total - done_hours)))
+                badges = [t("badge_skill", s=s_) for s_ in skill_badges]
+                if n_done >= 1:
+                    badges.append(t("badge_start"))
+                if learn_done == len(steps):
+                    badges.append(t("badge_builder"))
+                if n_done == n_all:
+                    badges.append(t("badge_ready"))
+                st.write("  \n".join(badges) if badges else t("badge_none"))
+                st.caption(t("plan_cap", p=learn_pref, g=growth_mindset))
+                st.caption(t("plan_note"))
+                st.markdown(t("hrd"))
 
-                # ---- 次要信息收进折叠面板 ----
-                with st.expander(t("why_h")):
-                    st.caption(t("score_break", c=row['coverage'] * 100, cw=100 - BG_W,
-                                 b=t("yes") if row['bg'] else t("no"), bw=BG_W, tb=row['trend_bonus']))
-                    st.caption(t("src_job", n=row['postings']))
-                    if signals:
-                        if row["trend_hits"] > 0:
-                            st.caption(t("sig_hit", n=len(signals), h=row['trend_hits'], ts=fetched_at))
-                        else:
-                            st.caption(t("sig_none", n=len(signals)))
-                    has_g = row["growth"] is not None and not pd.isna(row["growth"])
-                    if has_g:
-                        base_g = row["growth"]
-                        st.markdown(t("scen_title", g=base_g))
-                        s0, s1, s2 = st.columns(3)
-                        for col, name, m in [(s0, t("scen_slow"), mult_slow), (s1, t("scen_mod"), mult_mod), (s2, t("scen_fast"), mult_fast)]:
-                            g = base_g * m
-                            col.metric(name, f"{g:+.1f}% YoY", help=t("scen_help"))
-                            col.caption(t("scen_range", lo=g * (1 - spread / 100), hi=g * (1 + spread / 100)))
-                        st.caption(t("scen_warn"))
+            # ---- 次要信息（与上面的 expander 同级；Streamlit 不允许 expander 嵌套）----
+            with st.expander(t("why_h")):
+                st.caption(t("score_break", c=row['coverage'] * 100, cw=100 - BG_W,
+                             b=t("yes") if row['bg'] else t("no"), bw=BG_W, tb=row['trend_bonus']))
+                st.caption(t("src_job", n=row['postings']))
+                if signals:
+                    if row["trend_hits"] > 0:
+                        st.caption(t("sig_hit", n=len(signals), h=row['trend_hits'], ts=fetched_at))
                     else:
-                        st.caption(t("no_growth"))
+                        st.caption(t("sig_none", n=len(signals)))
+                has_g = row["growth"] is not None and not pd.isna(row["growth"])
+                if has_g:
+                    base_g = row["growth"]
+                    st.markdown(t("scen_title", g=base_g))
+                    s0, s1, s2 = st.columns(3)
+                    for col, name, m in [(s0, t("scen_slow"), mult_slow), (s1, t("scen_mod"), mult_mod), (s2, t("scen_fast"), mult_fast)]:
+                        g = base_g * m
+                        col.metric(name, f"{g:+.1f}% YoY", help=t("scen_help"))
+                        col.caption(t("scen_range", lo=g * (1 - spread / 100), hi=g * (1 + spread / 100)))
+                    st.caption(t("scen_warn"))
+                else:
+                    st.caption(t("no_growth"))
 
             top_sdg = ", ".join(sdg_name(n) for n, _ in chosen_sdgs.most_common(3) if n in SDG_NAMES)
             st.markdown(t("sdg_overall", s=top_sdg))
 
     # ======================= 市场趋势 =======================
     with sub_trend:
-        render_radar(role_df, skill_df, trend_meta, user_skills)
+        render_radar(role_df, skill_df, trend_meta, user_skills, signals)
 
     # ======================= 公平与来源 =======================
     with sub_trust:
