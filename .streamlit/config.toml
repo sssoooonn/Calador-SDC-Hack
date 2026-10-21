@@ -1,0 +1,11 @@
+# 放到项目文件夹里的 .streamlit/config.toml
+[theme]
+base = "light"
+primaryColor = "#2F73B8"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F4F6F9"
+textColor = "#2B3445"
+font = "sans serif"
+
+[client]
+toolbarMode = "minimal"

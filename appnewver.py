@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import altair as alt
-import os, re, json, math, datetime
+import os, re, json, math, datetime, html
 from collections import Counter
 
 st.set_page_config(page_title="Aiversecity - AI Career Navigator", layout="wide")
@@ -58,8 +58,19 @@ TXT = {
         "- Data: set data awam Kaggle, suapan RSS awam arXiv dan pautan sumber pembelajaran awam.\n"
         "- Tiada data peribadi sebenar digunakan; ahli sampel adalah data sintetik.\n"
         "- Sistem tidak mereka jawatan, kursus atau statistik; apabila data tiada, ia dinyatakan dengan jelas."),
-    "sb_assump": ("⚙️ 情景假设（可调，均为假设值）", "⚙️ Scenario assumptions (adjustable, assumptions only)",
-                  "⚙️ Andaian senario (boleh laras, andaian sahaja)"),
+    "sb_assump": ("⚙️ 设置与情景假设（可调）", "⚙️ Settings & scenario assumptions (adjustable)",
+                  "⚙️ Tetapan & andaian senario (boleh laras)"),
+    "sub_path": ("🧭 我的路径", "🧭 My path", "🧭 Laluan saya"),
+    "sub_trend": ("📡 市场趋势", "📡 Market trends", "📡 Trend pasaran"),
+    "sub_trust": ("⚖️ 公平与来源", "⚖️ Fairness & sources", "⚖️ Keadilan & sumber"),
+    "pick_role": ("选择要查看的岗位（按匹配度排序）", "Choose a role to view (ranked by match)", "Pilih jawatan untuk dilihat (disusun mengikut padanan)"),
+    "why_h": ("📎 得分构成、数据来源与需求情景", "📎 Score breakdown, sources & demand scenarios", "📎 Pecahan skor, sumber & senario permintaan"),
+    "app_sub": ("AI 时代职业与技能导航仪", "AI Career & Skills Navigator", "Pemandu Kerjaya & Kemahiran Era AI"),
+    "hero_pts": ("看清趋势|匹配技能|补齐差距|免费学习", "See the trends|Match your skills|Close the gaps|Learn for free",
+                 "Lihat trend|Padankan kemahiran|Tutup jurang|Belajar percuma"),
+    "tagline": ("对照你的技能与 AI 岗位的走向，再用免费资源一步步补齐差距。",
+                "See how your skills line up with where AI jobs are heading, then close the gaps with free learning resources.",
+                "Lihat bagaimana kemahiran anda selari dengan arah pekerjaan AI, kemudian tutup jurang dengan sumber pembelajaran percuma."),
     "mult_slow": ("缓慢采用：增长倍数", "Slow adoption: growth multiplier", "Penerimaan perlahan: pengganda pertumbuhan"),
     "mult_mod": ("温和变革：增长倍数", "Moderate change: growth multiplier", "Perubahan sederhana: pengganda pertumbuhan"),
     "mult_fast": ("快速颠覆：增长倍数", "Rapid disruption: growth multiplier", "Gangguan pesat: pengganda pertumbuhan"),
@@ -76,7 +87,7 @@ TXT = {
     "tab_team": ("👥 团队 / 批量模式（HR · 职业中心）", "👥 Team / batch mode (HR · Career centre)",
                  "👥 Mod pasukan / kelompok (HR · Pusat kerjaya)"),
     # ---- 个人录入 ----
-    "h_intake": ("1. 👤 个人技能画像录入 (Skills Profile Intake)", "1. 👤 Skills Profile Intake", "1. 👤 Pengambilan Profil Kemahiran"),
+    "h_intake": ("👤 你的技能画像", "👤 Your skills profile", "👤 Profil kemahiran anda"),
     "in_role": ("你当前的职业/专业背景：", "Your current job / field of study:", "Pekerjaan / bidang pengajian semasa anda:"),
     "in_skills": ("你掌握的技能（逗号分隔）：", "Your skills (comma-separated):", "Kemahiran anda (dipisahkan koma):"),
     "in_cv": ("（可选）上传 CV：PDF / DOCX / TXT，系统会自动识别技能",
@@ -100,14 +111,14 @@ TXT = {
                 "CV dibaca, tetapi tiada kemahiran daripada set data dikesan."),
     "cv_fail": ("CV 读取失败：{e}", "Could not read the CV: {e}", "Gagal membaca CV: {e}"),
     # ---- 雷达 ----
-    "h_radar": ("2. 📡 未来技能雷达 (Future Skills Radar)", "2. 📡 Future Skills Radar", "2. 📡 Radar Kemahiran Masa Depan"),
+    "h_radar": ("📡 未来技能雷达", "📡 Future Skills Radar", "📡 Radar Kemahiran Masa Depan"),
     "radar_nodata": ("数据集缺少 posting_year 列，无法计算上升 / 降温趋势。",
                      "The dataset has no posting_year column, so rising/cooling trends cannot be computed.",
                      "Set data tiada lajur posting_year, trend meningkat/menurun tidak dapat dikira."),
     "radar_method": (
-        "方法：比较同一数据集中 2025 年（{n25} 条）与 2026 年（{n26} 条）招聘记录里，各岗位 / 各技能所占份额的变化。绿色 = 份额上升，红色 = 份额下降（相对降温，不等于招聘总量减少）。注意：2026 年数据只覆盖 1–3 月，且单个岗位样本量较小（每年约 20–50 条），结论仅为趋势信号，不是预测。",
-        "Method: compare the share of each role / skill among the {n25} job records of 2025 and the {n26} records of 2026 in the same dataset. Green = share rising, red = share falling (relative cooling, not necessarily fewer jobs). Note: 2026 data only covers Jan–Mar and each role has a small sample (about 20–50 records per year), so results are trend signals, not forecasts.",
-        "Kaedah: bandingkan bahagian setiap jawatan / kemahiran antara {n25} rekod 2025 dan {n26} rekod 2026 dalam set data yang sama. Hijau = bahagian meningkat, merah = bahagian menurun (penyejukan relatif, bukan semestinya pekerjaan berkurang). Nota: data 2026 hanya meliputi Jan–Mac dan sampel setiap jawatan kecil (kira-kira 20–50 rekod setahun), jadi keputusan ialah isyarat trend, bukan ramalan."),
+        "方法：比较同一数据集中 2025 年（{n25} 条）与 2026 年（{n26} 条）招聘记录里，各岗位 / 各技能所占份额的变化。蓝色 = 份额上升，橙色 = 份额下降（相对降温，不等于招聘总量减少）。注意：2026 年数据只覆盖 1–3 月，且单个岗位样本量较小（每年约 20–50 条），结论仅为趋势信号，不是预测。",
+        "Method: compare the share of each role / skill among the {n25} job records of 2025 and the {n26} records of 2026 in the same dataset. Blue = share rising, orange = share falling (relative cooling, not necessarily fewer jobs). Note: 2026 data only covers Jan–Mar and each role has a small sample (about 20–50 records per year), so results are trend signals, not forecasts.",
+        "Kaedah: bandingkan bahagian setiap jawatan / kemahiran antara {n25} rekod 2025 dan {n26} rekod 2026 dalam set data yang sama. Biru = bahagian meningkat, jingga = bahagian menurun (penyejukan relatif, bukan semestinya pekerjaan berkurang). Nota: data 2026 hanya meliputi Jan–Mac dan sampel setiap jawatan kecil (kira-kira 20–50 rekod setahun), jadi keputusan ialah isyarat trend, bukan ramalan."),
     "radar_roles": ("岗位：份额上升 / 降温", "Roles: rising / cooling share", "Jawatan: bahagian meningkat / menurun"),
     "radar_skills": ("技能：份额上升 / 降温（各取前 10）", "Skills: rising / cooling share (top 10 each)",
                      "Kemahiran: bahagian meningkat / menurun (10 teratas setiap satu)"),
@@ -139,7 +150,7 @@ TXT = {
     # ---- 匹配 ----
     "btn_run": ("🔥 生成我的未来职业匹配与再培训路径", "🔥 Generate my future-career matches & reskilling path",
                 "🔥 Jana padanan kerjaya masa depan & laluan latihan semula"),
-    "h_match": ("3. 🎯 岗位匹配 (Get Matched)", "3. 🎯 Get Matched", "3. 🎯 Dapatkan Padanan"),
+    "h_match": ("🎯 你的岗位匹配", "🎯 Your role matches", "🎯 Padanan jawatan anda"),
     "match_cap": (
         "匹配度 = {cw}% × 技能覆盖率 + {bw}% × 背景相关度。趋势信号只用于排序微调，不改变匹配度分数。所有预测均为估计，不构成就业保证。",
         "Match score = {cw}% × skill coverage + {bw}% × background relevance. Trend signals only fine-tune the ranking and never change the score. All projections are estimates, not employment guarantees.",
@@ -363,6 +374,20 @@ TXT = {
 }
 
 
+# 极简风：去掉标题里的 emoji；趋势用 ▲ ▼ 表示
+_ARROWS = {"📈 ": "▲ ", "📉 ": "▼ ", "➖ ": "— "}
+_EMOJI_LEAD = re.compile(r"^(\*\*)?(?:[\U0001F000-\U0001FFFF\u2600-\u27BF\uFE0F\u200d]+\s*)+")
+
+
+def _plain(v):
+    for k, a in _ARROWS.items():
+        v = v.replace(k, a)
+    return _EMOJI_LEAD.sub(lambda m: m.group(1) or "", v)
+
+
+TXT = {k: tuple(_plain(x) for x in v) for k, v in TXT.items()}
+
+
 def t(key, **kw):
     s = TXT[key][_IDX[LANG]]
     return s.format(**kw) if kw else s
@@ -383,6 +408,92 @@ def clean(v):
         return ""
     s = str(v).strip()
     return "" if s.lower() == "nan" else s
+
+
+# =====================================================================
+# 外观：配色 / 字体 / CSS
+# =====================================================================
+NAVY, BLUE, ORANGE, LINE = "#36425F", "#2F73B8", "#F5A33A", "#D5DCE4"
+UP_C, DOWN_C = BLUE, ORANGE   # 上升 = 蓝，降温 = 橙
+FONT = '"Barlow","Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif'
+DISPLAY = '"Oswald","Arial Narrow","Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif'
+
+CSS = """
+:root{--navy:#36425F;--ink:#2B3445;--slate:#5A6890;--band:#E8EDF1;--paper:#F4F6F9;--blue:#2F73B8;--orange:#F5A33A;--line:#D5DCE4}
+.stApp{background:#fff!important;color:var(--ink);font-family:__FONT__}
+[data-testid="stHeader"]{background:var(--navy)}
+[data-testid="stHeader"] *{color:#E8EDF1!important}
+.block-container{max-width:1080px;padding-top:4.5rem;padding-bottom:5rem}
+#MainMenu,footer{visibility:hidden}
+[data-testid="stHeaderActionElements"]{display:none}
+
+h1,h2,h3,h4{font-family:__DISPLAY__!important;color:var(--navy);font-weight:500!important;letter-spacing:.03em}
+h2{font-size:1.7rem!important;text-transform:uppercase;margin-top:2.6rem!important;padding-bottom:0!important;border:none!important}
+h3{font-size:1.3rem!important;text-transform:uppercase}
+hr{margin:2rem 0;border-color:var(--line)}
+
+.hero{background:var(--band);padding:3rem 2.6rem 2.2rem;margin:0 0 1.8rem 0}
+.hero h1{font-family:__DISPLAY__!important;font-size:clamp(2.6rem,7vw,4.6rem)!important;font-weight:500!important;text-transform:uppercase;letter-spacing:.02em;color:var(--navy)!important;line-height:1.02;margin:0!important;padding:0!important}
+.hero h1::after{content:"";display:inline-block;width:.2em;height:.2em;border-radius:50%;background:var(--orange);margin-left:.12em}
+.hero .sub{font-family:__DISPLAY__;text-transform:uppercase;letter-spacing:.08em;color:var(--slate);font-size:1.15rem;margin:.6rem 0 0 0}
+.hero .pts{display:grid;grid-template-columns:repeat(2,minmax(0,15rem));gap:.4rem 2.5rem;margin-top:1.6rem;font-family:__DISPLAY__;text-transform:uppercase;letter-spacing:.06em;color:var(--navy);font-size:.95rem}
+.hero small{display:block;margin-top:1.8rem;color:var(--slate);font-size:.78rem}
+
+[data-baseweb="tab-list"]{gap:2rem}
+button[data-baseweb="tab"]{padding:.5rem 0;background:transparent}
+button[data-baseweb="tab"] p{font-family:__DISPLAY__!important;text-transform:uppercase;letter-spacing:.08em;font-size:1rem;color:var(--slate)}
+button[data-baseweb="tab"][aria-selected="true"] p{color:var(--navy)}
+[data-baseweb="tab-highlight"]{background-color:var(--orange)!important;height:2px!important}
+[data-baseweb="tab-border"]{background-color:var(--line)!important;height:1px!important}
+
+[data-testid="stMetric"]{background:transparent;border:none;border-top:1px solid var(--line);border-radius:0;padding:.7rem 0 .2rem}
+[data-testid="stMetricLabel"]{color:var(--slate);text-transform:uppercase;letter-spacing:.06em;font-size:.78rem}
+[data-testid="stMetricValue"]{font-family:__DISPLAY__;font-size:2rem;font-weight:500;color:var(--navy)}
+
+[class*="st-key-rolecard"]{background:transparent;border:none;border-top:2px solid var(--navy);border-radius:0;padding:1.2rem 0 .4rem;margin:.6rem 0 1.4rem 0}
+[class*="st-key-panel"]{background:var(--paper);border:none;border-radius:0;padding:1.6rem 1.8rem .8rem;margin:0 0 1.4rem 0}
+
+[data-testid="stExpander"] details{background:transparent;border:none!important;border-top:1px solid var(--line)!important;border-radius:0}
+[data-testid="stAlert"]{border-radius:0;background:var(--paper)!important;border-left:3px solid var(--blue)}
+[data-testid="stAlert"] > div{background:transparent!important}
+[data-testid="stDataFrame"]{border:1px solid var(--line);border-radius:0;overflow:hidden}
+
+button[kind="primary"],button[data-testid="stBaseButton-primary"]{background:var(--navy);border:1px solid var(--navy);color:#fff;border-radius:2px;padding:.7rem 1.8rem;font-family:__DISPLAY__;text-transform:uppercase;letter-spacing:.1em;font-weight:500}
+button[kind="primary"]:hover,button[data-testid="stBaseButton-primary"]:hover{background:var(--blue);border-color:var(--blue);color:#fff}
+.stDownloadButton button{border-radius:2px;border:1px solid var(--navy);color:var(--navy);font-family:__DISPLAY__;text-transform:uppercase;letter-spacing:.08em}
+
+[data-testid="stSidebar"]{background:var(--paper);border-right:none}
+[data-testid="stSidebar"] .stMarkdown p,[data-testid="stSidebar"] .stMarkdown li{font-size:.86rem;line-height:1.55}
+
+@media (max-width:640px){
+ .block-container{padding-left:1rem;padding-right:1rem}
+ .hero{padding:1.6rem 1.2rem 1.4rem}
+ .hero .pts{grid-template-columns:1fr}
+ [class*="st-key-panel"]{padding:1rem}
+}
+"""
+
+
+def inject_css(lite):
+    web_font = "" if lite else ("@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600"
+                                "&family=Oswald:wght@400;500&display=swap');")
+    css = CSS.replace("__FONT__", FONT).replace("__DISPLAY__", DISPLAY)
+    st.markdown(f"<style>{web_font}{css}</style>", unsafe_allow_html=True)
+
+
+def tidy(chart):
+    return chart.configure_view(strokeWidth=0).configure_axis(
+        gridColor="#E6EBF0", domainColor="#C7D0DA", tickColor="#C7D0DA",
+        labelColor="#40546A", titleColor="#40546A", labelFontSize=12, titleFontSize=12, titleFontWeight="normal")
+
+
+def box(prefix, idx=None):
+    """带 key 的白色卡片容器；旧版 Streamlit 不支持 key 时退回普通带边框容器。"""
+    key = f"{prefix}_{idx}" if idx is not None else prefix
+    try:
+        return st.container(key=key)
+    except TypeError:
+        return st.container(border=True)
 
 
 # =====================================================================
@@ -551,10 +662,10 @@ def compute_trends(raw):
 
 def diverging_bar(df, cat, val, height=None):
     h = height or max(220, 22 * len(df))
-    return alt.Chart(df).mark_bar().encode(
+    return alt.Chart(df).mark_bar(cornerRadiusEnd=3).encode(
         x=alt.X(f"{val}:Q", title=t("axis_shift")),
         y=alt.Y(f"{cat}:N", sort="-x", title=None),
-        color=alt.condition(alt.datum[val] > 0, alt.value("#2e9e5b"), alt.value("#d9534f")),
+        color=alt.condition(alt.datum[val] > 0, alt.value(UP_C), alt.value(DOWN_C)),
         tooltip=[alt.Tooltip(f"{cat}:N"), alt.Tooltip(f"{val}:Q", format="+.2f")],
     ).properties(height=h)
 
@@ -564,7 +675,7 @@ def show_chart(make_chart, table_df):
     if LITE:
         st.dataframe(table_df, use_container_width=True, hide_index=True)
     else:
-        st.altair_chart(make_chart(), use_container_width=True)
+        st.altair_chart(tidy(make_chart()), use_container_width=True, theme=None)
 
 
 def skill_trend_lookup(skill, skill_df):
@@ -766,7 +877,7 @@ def industry_sdg_text(industries):
 
 
 def render_sdg_coverage(jobs_df, vocab):
-    with st.expander(t("h_cov")):
+    with st.expander(t("h_cov"), expanded=True):
         role_cnt, skill_cnt, ind_cnt = Counter(), Counter(), Counter()
         for title in jobs_df["job_title"]:
             role_cnt.update(role_sdg(title)[0])
@@ -899,7 +1010,7 @@ def base_top(res, n=3):
 
 
 def render_fairness(user_skills, jobs_df, bg_w):
-    with st.expander(t("h_fair")):
+    with st.expander(t("h_fair"), expanded=True):
         if not user_skills:
             st.info(t("fair_need"))
             return
@@ -977,7 +1088,7 @@ def heatmap_chart(long_df, order):
     return alt.Chart(long_df).mark_rect(stroke="white").encode(
         x=alt.X("skill:N", sort=order, title=None, axis=alt.Axis(labelAngle=-40)),
         y=alt.Y("member:N", title=None),
-        color=alt.Color("state:N", scale=alt.Scale(domain=[t("have"), t("gap")], range=["#2e9e5b", "#d9534f"]),
+        color=alt.Color("state:N", scale=alt.Scale(domain=[t("have"), t("gap")], range=[UP_C, DOWN_C]),
                         legend=alt.Legend(title=None)),
         tooltip=["member", "skill", "state"],
     ).properties(height=max(120, 28 * long_df["member"].nunique()))
@@ -1037,7 +1148,7 @@ def render_team_mode(jobs_df, role_df, skill_df, signals, bg_w):
 
         st.subheader(t("team_cov_title", t=target))
         cov_df = pd.DataFrame(cov)
-        show_chart(lambda: alt.Chart(cov_df).mark_bar().encode(
+        show_chart(lambda: alt.Chart(cov_df).mark_bar(color=NAVY, cornerRadiusEnd=3).encode(
             x=alt.X("coverage:Q", title=t("team_cov_axis"), scale=alt.Scale(domain=[0, 100])),
             y=alt.Y("skill:N", sort="-x", title=None),
             tooltip=["skill", "coverage"]).properties(height=max(200, 26 * len(cov_df))), cov_df)
@@ -1050,7 +1161,7 @@ def render_team_mode(jobs_df, role_df, skill_df, signals, bg_w):
             pv = heat_df.pivot(index="member", columns="skill", values="state").reindex(columns=order)
             st.dataframe(pv.replace({t("have"): "✅", t("gap"): "❌"}), use_container_width=True)
         else:
-            st.altair_chart(heatmap_chart(heat_df, order), use_container_width=True)
+            st.altair_chart(tidy(heatmap_chart(heat_df, order)), use_container_width=True, theme=None)
 
         st.subheader(t("prio_title"))
         gap_rows = []
@@ -1095,12 +1206,12 @@ def render_team_mode(jobs_df, role_df, skill_df, signals, bg_w):
         with a:
             st.subheader(t("top_dist"))
             d1 = pd.DataFrame(top1_counter.most_common(), columns=["role", "count"])
-            show_chart(lambda: alt.Chart(d1).mark_bar().encode(
+            show_chart(lambda: alt.Chart(d1).mark_bar(color=NAVY, cornerRadiusEnd=3).encode(
                 x="count:Q", y=alt.Y("role:N", sort="-x", title=None), tooltip=["role", "count"]), d1)
         with b:
             st.subheader(t("common_gaps"))
             d2 = pd.DataFrame(gap_counter.most_common(10), columns=["skill", "count"])
-            show_chart(lambda: alt.Chart(d2).mark_bar().encode(
+            show_chart(lambda: alt.Chart(d2).mark_bar(color=NAVY, cornerRadiusEnd=3).encode(
                 x="count:Q", y=alt.Y("skill:N", sort="-x", title=None), tooltip=["skill", "count"]), d2)
         st.subheader(t("per_student"))
         st.dataframe(out, use_container_width=True, hide_index=True)
@@ -1115,50 +1226,56 @@ def render_team_mode(jobs_df, role_df, skill_df, signals, bg_w):
 # =====================================================================
 # 页面开始（侧边栏：语言、低流量模式放最前面）
 # =====================================================================
-lang_name = st.sidebar.selectbox("🌐 Language / 语言 / Bahasa", list(LANGS), index=2, key="lang")
+lang_name = st.sidebar.selectbox("Language / 语言 / Bahasa", list(LANGS), index=2, key="lang")
 LANG = LANGS[lang_name]
 LITE = st.sidebar.checkbox(t("lite"), key="lite")
+inject_css(LITE)
 
 raw_df, jobs_df, vocab = load_data()
 signals, fetched_at, from_cache = load_signals(LITE)
 role_df, skill_df, trend_meta = compute_trends(raw_df) if raw_df is not None else (None, None, {})
 role_shift = dict(zip(role_df["role"], role_df["shift_pp"])) if role_df is not None else {}
 
-st.title(t("app_title"))
-st.caption("Future-Ready Workforce Domain | Empowering Humans in the AI Era")
-st.info(t("human_note"))
+# ---------- 侧边栏：AI 披露常驻，其余收进折叠面板 ----------
+with st.sidebar.container(border=True):
+    st.markdown(f"**{t('sb_disc_title')}**")
+    st.markdown(t("sb_disc"))
 
-# ---------- 侧边栏 ----------
-st.sidebar.header(t("sb_signals"))
-st.sidebar.subheader(t("sb_src1"))
-if raw_df is None:
-    st.sidebar.error(t("sb_missing", f=DATA_FILE))
-else:
-    mtime = datetime.date.fromtimestamp(os.path.getmtime(DATA_FILE)).isoformat()
-    st.sidebar.markdown(t("sb_source", url=KAGGLE_URL))
-    st.sidebar.write(t("sb_filedate", d=mtime))
-    st.sidebar.write(t("sb_samples", n=len(raw_df)))
-
-st.sidebar.subheader(t("sb_src2"))
-if signals:
-    for s in signals[:5]:
-        st.sidebar.markdown(f"- [{s['title'][:70]}]({s['url']})  \n  {t('sb_pub', p=s['published'])}")
-    st.sidebar.caption(t("sb_arxiv", ts=fetched_at) + (t("cached") if from_cache else ""))
-else:
-    st.sidebar.warning(t("sb_nosig"))
-
-st.sidebar.markdown("---")
-st.sidebar.subheader(t("sb_disc_title"))
-st.sidebar.markdown(t("sb_disc"))
-st.sidebar.markdown("---")
+with st.sidebar.expander(t("sb_signals")):
+    st.markdown(f"**{t('sb_src1')}**")
+    if raw_df is None:
+        st.error(t("sb_missing", f=DATA_FILE))
+    else:
+        mtime = datetime.date.fromtimestamp(os.path.getmtime(DATA_FILE)).isoformat()
+        st.markdown(t("sb_source", url=KAGGLE_URL))
+        st.write(t("sb_filedate", d=mtime))
+        st.write(t("sb_samples", n=len(raw_df)))
+    st.markdown(f"**{t('sb_src2')}**")
+    if signals:
+        for sg in signals[:5]:
+            st.markdown(f"- [{sg['title'][:70]}]({sg['url']})  \n  {t('sb_pub', p=sg['published'])}")
+        st.caption(t("sb_arxiv", ts=fetched_at) + (t("cached") if from_cache else ""))
+    else:
+        st.warning(t("sb_nosig"))
 
 with st.sidebar.expander(t("sb_assump")):
+    skills_only = st.checkbox(t("skills_only"), key="skills_only")
     mult_slow = st.number_input(t("mult_slow"), 0.1, 3.0, 0.5, 0.1)
     mult_mod = st.number_input(t("mult_mod"), 0.1, 3.0, 1.0, 0.1)
     mult_fast = st.number_input(t("mult_fast"), 0.1, 5.0, 1.5, 0.1)
     spread = st.slider(t("spread"), 10, 60, 30)
-skills_only = st.sidebar.checkbox(t("skills_only"), key="skills_only")
 BG_W = 0 if skills_only else 10
+
+st.sidebar.caption("UI v2")
+
+# ---------- 顶部 hero ----------
+_pts = "".join(f"<span>{html.escape(x)}</span>" for x in t("hero_pts").split("|"))
+st.markdown(
+    f'<div class="hero"><h1>Aiversecity</h1><p class="sub">{html.escape(t("app_sub"))}</p>'
+    f'<div class="pts">{_pts}</div>'
+    f'<small>Future-Ready Workforce Domain | Empowering Humans in the AI Era</small></div>',
+    unsafe_allow_html=True)
+st.info(t("human_note"))
 
 if raw_df is None:
     st.error(t("err_nodata", f=DATA_FILE))
@@ -1171,146 +1288,157 @@ if jobs_df is None:
 tab_me, tab_team = st.tabs([t("tab_me"), t("tab_team")])
 
 with tab_me:
-    # ---------- 1. 技能画像录入 ----------
-    st.header(t("h_intake"))
-    col1, col2 = st.columns(2)
-    with col1:
-        user_role = st.text_input(t("in_role"), "student of accounting and finance")
-        user_skills_input = st.text_area(t("in_skills"), "Excel, ERP, Accounting, Financial Analysis")
-        cv_file = st.file_uploader(t("in_cv"), type=["pdf", "docx", "txt", "md"])
-        st.caption(t("cv_notice"))
-    with col2:
-        st.markdown(t("q_title"))
-        weekly_hours = st.slider(t("q_hours"), 2, 20, 5)
-        learn_pref = st.selectbox(t("q_pref"), [t("pref_self"), t("pref_proj"), t("pref_course")])
-        mind_opts = [t("mind_1"), t("mind_2"), t("mind_3")]
-        growth_mindset = st.select_slider(t("q_mind"), mind_opts, value=mind_opts[1])
+    sub_path, sub_trend, sub_trust = st.tabs([t("sub_path"), t("sub_trend"), t("sub_trust")])
 
-    user_skills = split_skills(user_skills_input)
-    if cv_file is not None:
-        cv_text = extract_cv_text(cv_file)
-        cv_found = detect_skills(cv_text, vocab)
-        if cv_found:
-            st.success(t("cv_found", n=len(cv_found), s=', '.join(cv_found[:15])))
-            user_skills |= set(cv_found)
-        elif cv_text:
-            st.info(t("cv_none"))
+    # ======================= 我的路径 =======================
+    with sub_path:
+        st.header(t("h_intake"))
+        with box("panel", "intake"):
+            col1, col2 = st.columns(2)
+            with col1:
+                user_role = st.text_input(t("in_role"), "student of accounting and finance")
+                user_skills_input = st.text_area(t("in_skills"), "Excel, ERP, Accounting, Financial Analysis")
+                cv_file = st.file_uploader(t("in_cv"), type=["pdf", "docx", "txt", "md"])
+                st.caption(t("cv_notice"))
+            with col2:
+                st.markdown(t("q_title"))
+                weekly_hours = st.slider(t("q_hours"), 2, 20, 5)
+                learn_pref = st.selectbox(t("q_pref"), [t("pref_self"), t("pref_proj"), t("pref_course")])
+                mind_opts = [t("mind_1"), t("mind_2"), t("mind_3")]
+                growth_mindset = st.select_slider(t("q_mind"), mind_opts, value=mind_opts[1])
 
-    st.markdown("---")
-    # ---------- 2. 未来技能雷达 ----------
-    render_radar(role_df, skill_df, trend_meta, user_skills)
+        user_skills = split_skills(user_skills_input)
+        if cv_file is not None:
+            cv_text = extract_cv_text(cv_file)
+            cv_found = detect_skills(cv_text, vocab)
+            if cv_found:
+                st.success(t("cv_found", n=len(cv_found), s=', '.join(cv_found[:15])))
+                user_skills |= set(cv_found)
+            elif cv_text:
+                st.info(t("cv_none"))
 
-    st.markdown("---")
-    if st.button(t("btn_run"), type="primary"):
-        st.session_state["run"] = True
+        if st.button(t("btn_run"), type="primary"):
+            st.session_state["run"] = True
 
-    if st.session_state.get("run"):
-        st.header(t("h_match"))
-        st.caption(t("match_cap", cw=100 - BG_W, bw=BG_W))
+        if st.session_state.get("run"):
+            st.header(t("h_match"))
+            st.caption(t("match_cap", cw=100 - BG_W, bw=BG_W))
 
-        res_all = match_roles(user_skills, user_role, jobs_df, signals, role_shift, BG_W)
-        top = res_all.head(3)
+            res_all = match_roles(user_skills, user_role, jobs_df, signals, role_shift, BG_W)
+            top = res_all.head(3)
 
-        # 自动重新规划：对比“不含趋势信号”和“含趋势信号”的推荐
-        before, after = base_top(res_all), top["job_title"].tolist()
-        if before != after:
-            st.info(t("replan_changed", old=" → ".join(before), new=" → ".join(after)))
-        else:
-            st.caption(t("replan_same"))
+            # 自动重新规划：对比“不含趋势信号”和“含趋势信号”的推荐
+            before, after = base_top(res_all), top["job_title"].tolist()
+            if before != after:
+                st.info(t("replan_changed", old=" → ".join(before), new=" → ".join(after)))
+            else:
+                st.caption(t("replan_same"))
 
-        chosen_sdgs = Counter()
-        trend_map_me = dict(zip(role_df["role"], role_df["status"])) if role_df is not None else {}
+            trend_map_me = dict(zip(role_df["role"], role_df["status"])) if role_df is not None else {}
+            chosen_sdgs = Counter()
+            for tt in top["job_title"]:
+                chosen_sdgs.update(role_sdg(tt)[0])
 
-        for _, row in top.iterrows():
+            # 一次只看一个岗位：前三名用单选切换
+            labels = [f"{r['job_title']}  ({r['match_score']}%)" for _, r in top.iterrows()]
+            pick = st.radio(t("pick_role"), labels, horizontal=True, key="role_pick")
+            rank = labels.index(pick) if pick in labels else 0
+            row = top.iloc[rank]
             title = row["job_title"]
             sdgs, sdg_desc = role_sdg(title)
-            chosen_sdgs.update(sdgs)
-            st.subheader(t("rec_role", t=title))
 
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric(t("m_score"), f"{row['match_score']}%")
-            c2.metric(t("m_postings"), f"{row['postings']}")
-            c3.metric(t("m_demand"), f"{int(row['demand_score'])}/100")
-            c4.metric(t("m_trend"), status_label(trend_map_me.get(title)),
-                      help=(t("trend_help", v=role_shift[title]) if title in role_shift else None))
-            st.caption(t("score_break", c=row['coverage'] * 100, cw=100 - BG_W,
-                         b=t("yes") if row['bg'] else t("no"), bw=BG_W, tb=row['trend_bonus']))
-            st.caption(t("src_job", n=row['postings']))
+            with box("rolecard", rank):
+                st.subheader(t("rec_role", t=title))
+                c1, c2, c3, c4 = st.columns(4)
+                c1.metric(t("m_score"), f"{row['match_score']}%")
+                c2.metric(t("m_postings"), f"{row['postings']}")
+                c3.metric(t("m_demand"), f"{int(row['demand_score'])}/100")
+                c4.metric(t("m_trend"), status_label(trend_map_me.get(title)),
+                          help=(t("trend_help", v=role_shift[title]) if title in role_shift else None))
 
-            if signals:
-                if row["trend_hits"] > 0:
-                    st.success(t("sig_hit", n=len(signals), h=row['trend_hits'], ts=fetched_at))
-                else:
-                    st.caption(t("sig_none", n=len(signals)))
+                g1, g2 = st.columns(2)
+                with g1:
+                    st.write(t("have_skills", s=tag_skills(row['matched']) if row['matched'] else t("generic")))
+                with g2:
+                    st.write(t("gap_skills", s=tag_skills(row['missing'][:6]) if row['missing'] else t("no_gap")))
 
-            st.write(t("have_skills", s=tag_skills(row['matched']) if row['matched'] else t("generic")))
-            st.write(t("gap_skills", s=tag_skills(row['missing'][:6]) if row['missing'] else t("no_gap")))
+                ind_txt = industry_sdg_text(row["industries"]) if isinstance(row["industries"], list) else ""
+                st.markdown(t("sdg_chain", title=title, sdg=sdg_label(sdgs), desc=sdg_desc)
+                            + (t("sdg_industry", s=ind_txt) if ind_txt else ""))
 
-            # ---- 多情景（只在数据集有增长率时显示，不再使用编造的默认值） ----
-            has_g = row["growth"] is not None and not pd.isna(row["growth"])
-            if has_g:
-                base_g = row["growth"]
-                st.markdown(t("scen_title", g=base_g))
-                s0, s1, s2 = st.columns(3)
-                for col, name, m in [(s0, t("scen_slow"), mult_slow), (s1, t("scen_mod"), mult_mod), (s2, t("scen_fast"), mult_fast)]:
-                    g = base_g * m
-                    col.metric(name, f"{g:+.1f}% YoY", help=t("scen_help"))
-                    col.caption(t("scen_range", lo=g * (1 - spread / 100), hi=g * (1 + spread / 100)))
-                st.caption(t("scen_warn"))
-            else:
-                st.caption(t("no_growth"))
-
-            # ---- SDG ----
-            ind_txt = industry_sdg_text(row["industries"]) if isinstance(row["industries"], list) else ""
-            st.info(t("sdg_chain", title=title, sdg=sdg_label(sdgs), desc=sdg_desc)
-                    + (t("sdg_industry", s=ind_txt) if ind_txt else ""))
-
-            # ---- 4. 再培训路径 + 学习进度与徽章 ----
-            steps, total, weeks, ph, cvh = build_plan(row["missing"], weekly_hours, skill_df)
-            with st.expander(t("plan_title", title=title, total=total, weeks=weeks)):
-                st.write(t("plan_time", total=total, wh=weekly_hours, weeks=weeks))
-                if skill_df is not None:
-                    st.caption(t("plan_prior"))
-                done_flags, done_hours, learn_done, skill_badges = [], 0, 0, []
-                for sk, name, url, cost, hrs in steps:
-                    label = f"{len(done_flags) + 1}. " + t("plan_skill", sk=sk, name=name, url=url, cost=t(cost), h=hrs,
-                                                            sdg='/'.join(map(str, skill_sdg(sk))))
-                    ok = st.checkbox(label, key=f"prog_{title}_{sk}")
+                # ---- 再培训路径 + 学习进度与徽章（默认展开，这是用户最需要的） ----
+                steps, total, weeks, ph, cvh = build_plan(row["missing"], weekly_hours, skill_df)
+                with st.expander(t("plan_title", title=title, total=total, weeks=weeks), expanded=True):
+                    st.write(t("plan_time", total=total, wh=weekly_hours, weeks=weeks))
+                    if skill_df is not None:
+                        st.caption(t("plan_prior"))
+                    done_flags, done_hours, learn_done, skill_badges = [], 0, 0, []
+                    for sk, name, url, cost, hrs in steps:
+                        label = f"{len(done_flags) + 1}. " + t("plan_skill", sk=sk, name=name, url=url, cost=t(cost), h=hrs,
+                                                                sdg='/'.join(map(str, skill_sdg(sk))))
+                        ok = st.checkbox(label, key=f"prog_{title}_{sk}")
+                        done_flags.append(ok)
+                        if ok:
+                            done_hours += hrs
+                            learn_done += 1
+                            skill_badges.append(sk)
+                    ok = st.checkbox(f"{len(done_flags) + 1}. " + t("plan_project", title=title, h=ph), key=f"prog_{title}_project")
                     done_flags.append(ok)
-                    if ok:
-                        done_hours += hrs
-                        learn_done += 1
-                        skill_badges.append(sk)
-                ok = st.checkbox(f"{len(done_flags) + 1}. " + t("plan_project", title=title, h=ph), key=f"prog_{title}_project")
-                done_flags.append(ok)
-                done_hours += ph if ok else 0
-                ok = st.checkbox(f"{len(done_flags) + 1}. " + t("plan_cv", h=cvh), key=f"prog_{title}_cv")
-                done_flags.append(ok)
-                done_hours += cvh if ok else 0
+                    done_hours += ph if ok else 0
+                    ok = st.checkbox(f"{len(done_flags) + 1}. " + t("plan_cv", h=cvh), key=f"prog_{title}_cv")
+                    done_flags.append(ok)
+                    done_hours += cvh if ok else 0
 
-                n_done, n_all = sum(done_flags), len(done_flags)
-                st.markdown(t("prog_title"))
-                st.progress(n_done / n_all)
-                st.caption(t("prog_text", d=n_done, n=n_all, h=max(0, total - done_hours)))
-                badges = [t("badge_skill", s=s) for s in skill_badges]
-                if n_done >= 1:
-                    badges.append(t("badge_start"))
-                if learn_done == len(steps):
-                    badges.append(t("badge_builder"))
-                if n_done == n_all:
-                    badges.append(t("badge_ready"))
-                st.write("  \n".join(badges) if badges else t("badge_none"))
+                    n_done, n_all = sum(done_flags), len(done_flags)
+                    st.markdown(t("prog_title"))
+                    st.progress(n_done / n_all)
+                    st.caption(t("prog_text", d=n_done, n=n_all, h=max(0, total - done_hours)))
+                    badges = [t("badge_skill", s=s_) for s_ in skill_badges]
+                    if n_done >= 1:
+                        badges.append(t("badge_start"))
+                    if learn_done == len(steps):
+                        badges.append(t("badge_builder"))
+                    if n_done == n_all:
+                        badges.append(t("badge_ready"))
+                    st.write("  \n".join(badges) if badges else t("badge_none"))
+                    st.caption(t("plan_cap", p=learn_pref, g=growth_mindset))
+                    st.caption(t("plan_note"))
+                    st.markdown(t("hrd"))
 
-                st.caption(t("plan_cap", p=learn_pref, g=growth_mindset))
-                st.caption(t("plan_note"))
-                st.markdown(t("hrd"))
-            st.markdown("---")
+                # ---- 次要信息收进折叠面板 ----
+                with st.expander(t("why_h")):
+                    st.caption(t("score_break", c=row['coverage'] * 100, cw=100 - BG_W,
+                                 b=t("yes") if row['bg'] else t("no"), bw=BG_W, tb=row['trend_bonus']))
+                    st.caption(t("src_job", n=row['postings']))
+                    if signals:
+                        if row["trend_hits"] > 0:
+                            st.caption(t("sig_hit", n=len(signals), h=row['trend_hits'], ts=fetched_at))
+                        else:
+                            st.caption(t("sig_none", n=len(signals)))
+                    has_g = row["growth"] is not None and not pd.isna(row["growth"])
+                    if has_g:
+                        base_g = row["growth"]
+                        st.markdown(t("scen_title", g=base_g))
+                        s0, s1, s2 = st.columns(3)
+                        for col, name, m in [(s0, t("scen_slow"), mult_slow), (s1, t("scen_mod"), mult_mod), (s2, t("scen_fast"), mult_fast)]:
+                            g = base_g * m
+                            col.metric(name, f"{g:+.1f}% YoY", help=t("scen_help"))
+                            col.caption(t("scen_range", lo=g * (1 - spread / 100), hi=g * (1 + spread / 100)))
+                        st.caption(t("scen_warn"))
+                    else:
+                        st.caption(t("no_growth"))
 
-        top_sdg = ", ".join(sdg_name(n) for n, _ in chosen_sdgs.most_common(3) if n in SDG_NAMES)
-        st.success(t("sdg_overall", s=top_sdg))
+            top_sdg = ", ".join(sdg_name(n) for n, _ in chosen_sdgs.most_common(3) if n in SDG_NAMES)
+            st.markdown(t("sdg_overall", s=top_sdg))
 
-    render_fairness(user_skills, jobs_df, BG_W)
-    render_sdg_coverage(jobs_df, vocab)
+    # ======================= 市场趋势 =======================
+    with sub_trend:
+        render_radar(role_df, skill_df, trend_meta, user_skills)
+
+    # ======================= 公平与来源 =======================
+    with sub_trust:
+        render_fairness(user_skills, jobs_df, BG_W)
+        render_sdg_coverage(jobs_df, vocab)
 
 with tab_team:
     render_team_mode(jobs_df, role_df, skill_df, signals, BG_W)
