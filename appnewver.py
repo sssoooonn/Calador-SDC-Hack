@@ -10,7 +10,7 @@ st.set_page_config(page_title="Aiversecity - AI Career Navigator", layout="wide"
 DATA_FILE = "ai_jobs_market_2025_2026.csv"
 CACHE_FILE = "trends_cache.json"
 KAGGLE_URL = "https://www.kaggle.com/datasets/alitaqishah/ai-jobs-market-2025-2026-salaries"
-ARXIV_RSS = "http://export.arxiv.org/rss/cs.AI"
+ARXIV_RSS = "https://rss.arxiv.org/rss/cs.AI"
 
 UP, DOWN, FLAT = "UP", "DOWN", "FLAT"  # 语言无关的内部状态码，显示时用 status_label() 转换
 
@@ -143,6 +143,16 @@ TXT = {
     "pos_down": ("📉 降温：{s}", "📉 Cooling: {s}", "📉 Menurun: {s}"),
     "pos_flat": ("➖ 持平：{s}", "➖ Flat: {s}", "➖ Mendatar: {s}"),
     "none": ("暂无", "none", "tiada"),
+    "col_heat": ("arXiv 研究热度（篇数/总篇数）", "arXiv research heat (papers/total)", "Haba penyelidikan arXiv (kertas/jumlah)"),
+    "col_mom": ("动量分", "Momentum score", "Skor momentum"),
+    "radar_mom_title": ("🔥 技能动量榜（招聘份额变化 + arXiv 研究热度）", "🔥 Skill momentum ranking (job-share change + arXiv research heat)",
+                        "🔥 Ranking momentum kemahiran (perubahan bahagian pekerjaan + haba penyelidikan arXiv)"),
+    "radar_mom_cap": ("动量分 = 招聘份额变化(pp) + {w} × 研究热度（占最新论文的 %）。权重 {w} 是我们设定的假设值；研究热度反映学术关注度，不等于招聘需求。",
+                      "Momentum = job-share change (pp) + {w} × research heat (% of the latest papers). The weight {w} is our assumption; research heat reflects academic interest, not hiring demand.",
+                      "Momentum = perubahan bahagian pekerjaan (pp) + {w} × haba penyelidikan (% kertas terkini). Pemberat {w} ialah andaian kami; haba penyelidikan mencerminkan minat akademik, bukan permintaan pekerjaan."),
+    "plan_why": ("排序依据（招聘份额变化 ｜ 提到该技能的论文数/总数）：{s}",
+                 "Ordering basis (job-share change | papers mentioning the skill / total): {s}",
+                 "Asas susunan (perubahan bahagian pekerjaan | kertas menyebut kemahiran / jumlah): {s}"),
     "pos_unknown": (
         "以下技能不在数据集的技能词表中（或样本太少），未给出趋势：{s}。这不代表它们没有价值，只是该数据集没有覆盖。",
         "These skills are not in the dataset's skill vocabulary (or have too few samples), so no trend is shown: {s}. This does not mean they lack value — the dataset simply does not cover them.",
@@ -510,7 +520,10 @@ def read_cache():
 def fetch_live_signals():
     try:
         import feedparser
+        ARXIV_API = "https://export.arxiv.org/api/query?search_query=cat:cs.AI&sortBy=submittedDate&sortOrder=descending&max_results=30"
         feed = feedparser.parse(ARXIV_RSS)
+        if not feed.entries:
+            feed = feedparser.parse(ARXIV_API)
         items = [{"title": e.title, "url": e.link, "published": e.get("published", "N/A")}
                  for e in feed.entries[:30]]
         if not items:
@@ -561,6 +574,52 @@ def trend_hits(title, signals):
     if not kws:
         return 0
     return sum(1 for sg in signals if any(k in sg["title"].lower() for k in kws))
+
+
+# ---- 技能动量：招聘份额变化 + arXiv 研究热度 ----
+HEAT_W = 0.1  # 研究热度的权重（假设值，可调）
+SKILL_SYN = {
+    "llm": ["llm", "language model"], "prompt": ["prompt"],
+    "nlp": ["nlp", "natural language"], "vision": ["vision", "image"],
+    "deep learning": ["deep learning", "neural"], "machine learning": ["machine learning"],
+    "rag": ["retrieval-augmented", "retrieval augmented", "rag"],
+    "agent": ["agent", "agentic"], "reinforcement": ["reinforcement"],
+    "ethic": ["ethic", "fairness", "bias", "safety"], "robot": ["robot", "embodied"],
+    "generative": ["generative", "diffusion"], "transformer": ["transformer"],
+    "multimodal": ["multimodal", "multi-modal"],
+}
+
+
+def _hit(kw, text):
+    pat = r"(?<![a-z0-9])" + re.escape(kw)
+    if len(kw) <= 4:
+        pat += r"(?:s|es)?(?![a-z0-9])"
+    return re.search(pat, text) is not None
+
+
+def skill_heat(skill, signals):
+    """某技能在最新 arXiv 论文标题里出现的篇数"""
+    if not signals:
+        return 0
+    s = skill.lower()
+    kws = {s}
+    for key, syns in SKILL_SYN.items():
+        if _hit(key, s):
+            kws.update(syns)
+    return sum(1 for sg in signals if any(_hit(k, sg["title"].lower()) for k in kws))
+
+
+def skill_momentum(skill, skill_df, signals):
+    """返回 (动量分, 招聘份额变化pp, 论文篇数)"""
+    shift = 0.0
+    if skill_df is not None:
+        hit = skill_df[skill_df["skill"] == skill]
+        if len(hit):
+            shift = float(hit.iloc[0]["shift_pp"])
+    n = len(signals) if signals else 0
+    h = skill_heat(skill, signals)
+    pct = h / n * 100 if n else 0.0
+    return shift + HEAT_W * pct, shift, h
 
 
 # =====================================================================
@@ -685,7 +744,7 @@ def skill_trend_lookup(skill, skill_df):
     return hit.iloc[0] if len(hit) else None
 
 
-def render_radar(role_df, skill_df, meta, user_skills):
+def render_radar(role_df, skill_df, meta, user_skills, signals=None):
     st.header(t("h_radar"))
     if role_df is None:
         st.info(t("radar_nodata"))
@@ -712,6 +771,17 @@ def render_radar(role_df, skill_df, meta, user_skills):
         t2["status"] = t2["status"].map(status_label)
         t2.columns = [t("col_skill"), t("col_trend"), t("col_shift"), t("col_n25s"), t("col_n26s"), t("col_g_skill")]
         st.dataframe(t2.round(2), use_container_width=True, hide_index=True)
+
+    if signals:
+        rows = []
+        for sk in skill_df["skill"]:
+            m, sh, h = skill_momentum(sk, skill_df, signals)
+            rows.append({t("col_skill"): sk, t("col_shift"): round(sh, 2),
+                         t("col_heat"): f"{h}/{len(signals)}", t("col_mom"): round(m, 2)})
+        mom = pd.DataFrame(rows).sort_values(t("col_mom"), ascending=False).head(10)
+        st.subheader(t("radar_mom_title"))
+        st.caption(t("radar_mom_cap", w=HEAT_W))
+        st.dataframe(mom, use_container_width=True, hide_index=True)
 
     if user_skills:
         ups, downs, flats, unknown = [], [], [], []
@@ -938,12 +1008,10 @@ def pick_resource(skill):
     return None
 
 
-def build_plan(missing, weekly_hours, skill_df=None):
-    """missing 按雷达趋势排序：份额上升的技能优先（自动重新规划）。"""
+def build_plan(missing, weekly_hours, skill_df=None, signals=None):
+    """missing 按动量排序：招聘份额上升 + arXiv 研究热度高的技能优先。"""
     order = list(missing)
-    if skill_df is not None:
-        shift = dict(zip(skill_df["skill"], skill_df["shift_pp"]))
-        order.sort(key=lambda s: -shift.get(s, 0.0))
+    order.sort(key=lambda s: -skill_momentum(s, skill_df, signals)[0])
     steps, seen = [], set()
     for sk in order:
         r = pick_resource(sk)
@@ -997,7 +1065,8 @@ def match_roles(user_skills, user_role, jobs_df, signals=None, role_shift=None, 
                 bg = 1.0
         score = round((100 - bg_w) * coverage + bg_w * bg)
         hits = trend_hits(row["job_title"], signals)
-        bonus = float(np.clip(role_shift.get(row["job_title"], 0.0) * 3, -3, 3)) + min(hits, 3) * 0.5
+        bonus = (float(np.clip(role_shift.get(row["job_title"], 0.0) * 3, -3, 3)) + min(hits, 3) * 0.5
+                 + min(sum(1 for s in req if skill_heat(s, signals) > 0), 4) * 0.5)
         results.append({**row.to_dict(), "matched": matched, "missing": missing, "coverage": coverage,
                         "bg": bg, "match_score": score, "trend_hits": hits,
                         "trend_bonus": bonus, "rank_score": score + bonus})
@@ -1128,7 +1197,7 @@ def render_team_mode(jobs_df, role_df, skill_df, signals, bg_w):
             r = res[res["job_title"] == target].iloc[0]
             for s in r["missing"]:
                 miss_counter[s] += 1
-            _, tot, wk, _, _ = build_plan(r["missing"], hours, skill_df)
+            _, tot, wk, _, _ = build_plan(r["missing"], hours, skill_df, signals)
             total_hours += tot
             member_rows.append({t("col_member"): m["name"], t("col_bg"): m["background"], t("match_pct"): r["match_score"],
                                 t("n_gap"): len(r["missing"]), t("est_h"): tot, t("est_wk"): wk})
@@ -1317,8 +1386,13 @@ with tab_me:
             elif cv_text:
                 st.info(t("cv_none"))
 
-        if st.button(t("btn_run"), type="primary"):
-            st.session_state["run"] = True
+    st.markdown("---")
+    # ---------- 2. 未来技能雷达 ----------
+    render_radar(role_df, skill_df, trend_meta, user_skills, signals)
+
+    st.markdown("---")
+    if st.button(t("btn_run"), type="primary"):
+        st.session_state["run"] = True
 
         if st.session_state.get("run"):
             st.header(t("h_match"))
@@ -1366,28 +1440,34 @@ with tab_me:
                 st.markdown(t("sdg_chain", title=title, sdg=sdg_label(sdgs), desc=sdg_desc)
                             + (t("sdg_industry", s=ind_txt) if ind_txt else ""))
 
-                # ---- 再培训路径 + 学习进度与徽章（默认展开，这是用户最需要的） ----
-                steps, total, weeks, ph, cvh = build_plan(row["missing"], weekly_hours, skill_df)
-                with st.expander(t("plan_title", title=title, total=total, weeks=weeks), expanded=True):
-                    st.write(t("plan_time", total=total, wh=weekly_hours, weeks=weeks))
-                    if skill_df is not None:
-                        st.caption(t("plan_prior"))
-                    done_flags, done_hours, learn_done, skill_badges = [], 0, 0, []
-                    for sk, name, url, cost, hrs in steps:
-                        label = f"{len(done_flags) + 1}. " + t("plan_skill", sk=sk, name=name, url=url, cost=t(cost), h=hrs,
-                                                                sdg='/'.join(map(str, skill_sdg(sk))))
-                        ok = st.checkbox(label, key=f"prog_{title}_{sk}")
-                        done_flags.append(ok)
-                        if ok:
-                            done_hours += hrs
-                            learn_done += 1
-                            skill_badges.append(sk)
-                    ok = st.checkbox(f"{len(done_flags) + 1}. " + t("plan_project", title=title, h=ph), key=f"prog_{title}_project")
+            # ---- 4. 再培训路径 + 学习进度与徽章 ----
+            steps, total, weeks, ph, cvh = build_plan(row["missing"], weekly_hours, skill_df, signals)
+            with st.expander(t("plan_title", title=title, total=total, weeks=weeks)):
+                st.write(t("plan_time", total=total, wh=weekly_hours, weeks=weeks))
+                if skill_df is not None:
+                    st.caption(t("plan_prior"))
+                if signals and steps:
+                    parts = []
+                    for sk, *_ in steps:
+                        _, sh, h = skill_momentum(sk, skill_df, signals)
+                        parts.append(f"{sk}（{sh:+.1f}pp ｜ {h}/{len(signals)}）")
+                    st.caption(t("plan_why", s="；".join(parts)))
+                done_flags, done_hours, learn_done, skill_badges = [], 0, 0, []
+                for sk, name, url, cost, hrs in steps:
+                    label = f"{len(done_flags) + 1}. " + t("plan_skill", sk=sk, name=name, url=url, cost=t(cost), h=hrs,
+                                                            sdg='/'.join(map(str, skill_sdg(sk))))
+                    ok = st.checkbox(label, key=f"prog_{title}_{sk}")
                     done_flags.append(ok)
-                    done_hours += ph if ok else 0
-                    ok = st.checkbox(f"{len(done_flags) + 1}. " + t("plan_cv", h=cvh), key=f"prog_{title}_cv")
-                    done_flags.append(ok)
-                    done_hours += cvh if ok else 0
+                    if ok:
+                        done_hours += hrs
+                        learn_done += 1
+                        skill_badges.append(sk)
+                ok = st.checkbox(f"{len(done_flags) + 1}. " + t("plan_project", title=title, h=ph), key=f"prog_{title}_project")
+                done_flags.append(ok)
+                done_hours += ph if ok else 0
+                ok = st.checkbox(f"{len(done_flags) + 1}. " + t("plan_cv", h=cvh), key=f"prog_{title}_cv")
+                done_flags.append(ok)
+                done_hours += cvh if ok else 0
 
                     n_done, n_all = sum(done_flags), len(done_flags)
                     st.markdown(t("prog_title"))

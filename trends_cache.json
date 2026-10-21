@@ -1,0 +1,155 @@
+{
+  "fetched_at": "2026-10-21 14:49",
+  "items": [
+    {
+      "title": "Navalia: Advancing Cowork Agents through Verifiable Task Synthesis and Long-Horizon Post-Training",
+      "url": "https://arxiv.org/abs/2610.26887",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "Large language model and reinforcement learning based autonomous construction and progress updates",
+      "url": "https://arxiv.org/abs/2610.26899",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "Pareto-Optimal RTL Code Generation via Multi-Objective Reinforcement Learning with Large Language Models",
+      "url": "https://arxiv.org/abs/2610.26904",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "MedPAO-Assist: Edge-Deployable, Modality-Aware Agentic AI for Radiology Report Structuring",
+      "url": "https://arxiv.org/abs/2610.26913",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "DataPraxis: Scaling Analytics Tasks via Verified Workspace Evolution",
+      "url": "https://arxiv.org/abs/2610.26924",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "Industrial Agentic AI: LLM-Driven New-Generation Agents for Smart Manufacturing",
+      "url": "https://arxiv.org/abs/2610.26941",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "Fix, Not Just Resample: Bounded Compiler-Guided Repair in Lean 4",
+      "url": "https://arxiv.org/abs/2610.26942",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "MAMath-Bench: Process-Aware and Robust Evaluation of Multimodal Multi-Agent Mathematical Reasoning",
+      "url": "https://arxiv.org/abs/2610.26943",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "LightCRS: Lightweight Multi-Domain Conversational Recommendation System",
+      "url": "https://arxiv.org/abs/2610.26948",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "When Planning Problems Become Hard for LLMs: Separating Structural Complexity from Semantic Interpretability",
+      "url": "https://arxiv.org/abs/2610.26964",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "SPEM: Structure-Aware Procedural Memory for Efficient Skill Use in LLM Agents",
+      "url": "https://arxiv.org/abs/2610.26995",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "Does Multi-Agent Collaboration Reduce Hallucination in Clinical Tasks?",
+      "url": "https://arxiv.org/abs/2610.27027",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "Teaching AI Agent to Play Poker Strategically Through Preference Optimization",
+      "url": "https://arxiv.org/abs/2610.27028",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "M-Plan: Comprehensive Planning For LLM Agents with Memory Arrangement",
+      "url": "https://arxiv.org/abs/2610.27032",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "Physical AI: Concepts, Techniques, and Challenges",
+      "url": "https://arxiv.org/abs/2610.27045",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "ReuF2F: Benchmarking Coding Agents on Formalized Undergraduate Research Problems",
+      "url": "https://arxiv.org/abs/2610.27046",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "A general-purpose System One decision model for clinical records",
+      "url": "https://arxiv.org/abs/2610.27099",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "Omni-Woodpecker: Hallucination Correction via Evidence-Prior Rebalancing for Omni LLMs",
+      "url": "https://arxiv.org/abs/2610.27103",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "PROVISO: Provenance-Informed Action Selection for Secure LLM Agents",
+      "url": "https://arxiv.org/abs/2610.27115",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "PORA: Learning When More Reasoning Pays Off for LLM Agents",
+      "url": "https://arxiv.org/abs/2610.27119",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "EDMA: Entropy-Driven Multimodal Answering",
+      "url": "https://arxiv.org/abs/2610.27120",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "MoSAIK: Motion Search with Artificial Intelligence in K-space",
+      "url": "https://arxiv.org/abs/2610.27156",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "Learned Control Variates for Rare Grid-Outage Estimation at Electric Vehicle Charging Stations",
+      "url": "https://arxiv.org/abs/2610.27159",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "LSA-PAST: Layer-Specific Adaptation and Prototype Transport for Compositional Incremental Learning",
+      "url": "https://arxiv.org/abs/2610.27203",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "Sparse RL Relaxation for LLM Reasoning",
+      "url": "https://arxiv.org/abs/2610.27220",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "Magnolia: A Persistent-Memory Agent Framework for Computational Chemistry",
+      "url": "https://arxiv.org/abs/2610.27230",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "EGI-BENCH: An Enterprise General Intelligence Benchmark Suite",
+      "url": "https://arxiv.org/abs/2610.27234",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "TxnQA: Benchmarking Analytical Reasoning and Evidence Grounding over Transaction Event Sequences",
+      "url": "https://arxiv.org/abs/2610.27256",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "A latent control model for realistic rodent motion",
+      "url": "https://arxiv.org/abs/2610.27279",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    },
+    {
+      "title": "TEX: Test-Time Scaling Testing Agents via Execution-based Cross-Validation",
+      "url": "https://arxiv.org/abs/2610.27290",
+      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+    }
+  ]
+}
