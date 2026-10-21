@@ -1,3 +1,5 @@
+from email import feedparser
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -10,7 +12,7 @@ st.set_page_config(page_title="Aiversecity - AI Career Navigator", layout="wide"
 DATA_FILE = "ai_jobs_market_2025_2026.csv"
 CACHE_FILE = "trends_cache.json"
 KAGGLE_URL = "https://www.kaggle.com/datasets/alitaqishah/ai-jobs-market-2025-2026-salaries"
-ARXIV_RSS = "http://export.arxiv.org/rss/cs.AI"
+ARXIV_RSS = "https://rss.arxiv.org/rss/cs.AI"
 
 UP, DOWN, FLAT = "UP", "DOWN", "FLAT"  # 语言无关的内部状态码，显示时用 status_label() 转换
 
@@ -399,7 +401,10 @@ def read_cache():
 def fetch_live_signals():
     try:
         import feedparser
+        ARXIV_API = "https://export.arxiv.org/api/query?search_query=cat:cs.AI&sortBy=submittedDate&sortOrder=descending&max_results=30"
         feed = feedparser.parse(ARXIV_RSS)
+        if not feed.entries:
+            feed = feedparser.parse(ARXIV_API)
         items = [{"title": e.title, "url": e.link, "published": e.get("published", "N/A")}
                  for e in feed.entries[:30]]
         if not items:
