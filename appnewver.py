@@ -37,7 +37,11 @@ TXT = {
     "sb_missing": ("未找到 {f}", "{f} not found", "{f} tidak dijumpai"),
     "sb_source": ("**来源：** [Kaggle · AI Jobs Market 2025-2026]({url})", "**Source:** [Kaggle · AI Jobs Market 2025-2026]({url})",
                   "**Sumber:** [Kaggle · AI Jobs Market 2025-2026]({url})"),
-    "sb_filedate": ("**数据文件日期：** {d}", "**Data file date:** {d}", "**Tarikh fail data:** {d}"),
+    "sb_filedate": ("**数据文件最后修改日期：** {d}（不是数据集发布日期）",
+                    "**Data file last modified:** {d} (not the dataset's publication date)",
+                    "**Tarikh fail diubah suai:** {d} (bukan tarikh penerbitan set data)"),
+    "sb_period": ("**数据覆盖的招聘时间：** {r}", "**Postings period covered:** {r}",
+                  "**Tempoh iklan diliputi:** {r}"),
     "sb_samples": ("**样本数：** {n} 条招聘记录", "**Samples:** {n} job-posting records", "**Sampel:** {n} rekod iklan jawatan"),
     "sb_src2": ("② 最新 AI 研究动态（实时更新）", "② Latest AI research (live)", "② Penyelidikan AI terkini (langsung)"),
     "sb_pub": ("发布：{p}", "Published: {p}", "Diterbitkan: {p}"),
@@ -106,6 +110,16 @@ TXT = {
     "mind_1": ("一般", "Moderate", "Sederhana"),
     "mind_2": ("较高", "High", "Tinggi"),
     "mind_3": ("很高", "Very high", "Sangat tinggi"),
+    "q_sdg": ("你最关心哪些 SDG？（可多选，会提高相关岗位的排名）",
+              "Which SDGs matter most to you? (multi-select; boosts related roles in the ranking)",
+              "SDG mana yang paling penting bagi anda? (pilih beberapa; menaikkan kedudukan jawatan berkaitan)"),
+    "sdg_pref_on": ("已应用你的 SDG 偏好：每个重合的 SDG 在排序中加 {w} 分（只影响排序，不改变匹配度分数）。",
+                    "Your SDG preference is applied: each overlapping SDG adds {w} points to the ranking only (the match score is unchanged).",
+                    "Pilihan SDG anda digunakan: setiap SDG yang bertindih menambah {w} mata pada susunan sahaja (skor padanan tidak berubah)."),
+    "sdg_match": ("此岗位符合你关心的：{s}", "This role matches your chosen SDGs: {s}",
+                  "Jawatan ini sepadan dengan SDG pilihan anda: {s}"),
+    "sdg_bonus_line": ("SDG 偏好加权（仅用于排序）：{b:+.0f}", "SDG preference weighting (ranking only): {b:+.0f}",
+                       "Pemberat pilihan SDG (susunan sahaja): {b:+.0f}"),
     "cv_found": ("从 CV 识别到 {n} 项技能：{s}", "Detected {n} skills from the CV: {s}", "{n} kemahiran dikesan daripada CV: {s}"),
     "cv_none": ("CV 已读取，但没有识别到数据集中的技能关键词。", "CV read, but no skills from the dataset were detected.",
                 "CV dibaca, tetapi tiada kemahiran daripada set data dikesan."),
@@ -234,6 +248,12 @@ TXT = {
     "plan_skill": ("补齐「{sk}」：[{name}]({url}) · {cost} · 约 {h} 小时　〔SDG {sdg}〕",
                    "Learn “{sk}”: [{name}]({url}) · {cost} · about {h} hours　〔SDG {sdg}〕",
                    "Pelajari “{sk}”: [{name}]({url}) · {cost} · kira-kira {h} jam　〔SDG {sdg}〕"),
+    "plan_nores": ("以下技能暂无匹配的免费资源，系统不会编造课程：{s}。建议自行搜索或请教导师。",
+                   "No matching free resource for these skills; the system will not invent a course: {s}. Please search on your own or ask a mentor.",
+                   "Tiada sumber percuma yang sepadan untuk kemahiran ini; sistem tidak akan mereka kursus: {s}. Sila cari sendiri atau tanya mentor."),
+    "plan_empty": ("该岗位的缺口技能都没有匹配的资源，下面只保留项目和简历步骤。",
+                   "None of this role's gap skills has a matching resource, so only the project and CV steps remain.",
+                   "Tiada kemahiran jurang untuk jawatan ini mempunyai sumber sepadan, jadi hanya langkah projek dan CV kekal."),
     "plan_project": ("实操项目：用 Kaggle 公开数据集完成 1 个与「{title}」相关的小项目并放到 GitHub · 约 {h} 小时",
                      "Hands-on project: build one small project related to “{title}” with a public Kaggle dataset and publish it on GitHub · about {h} hours",
                      "Projek praktikal: bina satu projek kecil berkaitan “{title}” dengan set data awam Kaggle dan terbitkan di GitHub · kira-kira {h} jam"),
@@ -638,6 +658,20 @@ def split_skills(s):
     return {x.strip().lower() for x in re.split(r"[,|;，；]", str(s)) if x.strip()}
 
 
+def data_period(raw):
+    """数据集本身覆盖的招聘时间（不是文件上传日期）"""
+    col = find_col(raw, ["posting_date", "date_posted", "posted_date", "date"])
+    if col:
+        d = pd.to_datetime(raw[col], errors="coerce").dropna()
+        if len(d):
+            return f"{d.min():%Y-%m-%d} → {d.max():%Y-%m-%d}"
+    if "posting_year" in raw.columns:
+        ys = raw["posting_year"].dropna().astype(int)
+        if len(ys):
+            return f"{ys.min()} – {ys.max()}"
+    return None
+
+
 @st.cache_data
 def load_data():
     if not os.path.exists(DATA_FILE):
@@ -997,7 +1031,6 @@ RESOURCES = [
     (["ethic", "risk", "govern", "compliance", "privacy", "policy", "safety"], "Elements of AI (includes AI ethics)", "https://www.elementsofai.com/", "c_free", 30),
     (["product", "strategy", "management", "communication"], "Coursera · AI For Everyone", "https://www.coursera.org/learn/ai-for-everyone", "c_audit", 6),
 ]
-DEFAULT_RESOURCE = ("Elements of AI", "https://www.elementsofai.com/", "c_free", 30)
 
 
 def pick_resource(skill):
@@ -1008,8 +1041,14 @@ def pick_resource(skill):
     return None
 
 
+def no_resource_skills(skills):
+    """没有匹配资源的技能：如实列出，不编造课程。"""
+    return [s for s in skills if pick_resource(s) is None]
+
+
 def build_plan(missing, weekly_hours, skill_df=None, signals=None):
-    """missing 按动量排序：招聘份额上升 + arXiv 研究热度高的技能优先。"""
+    """missing 按动量排序：招聘份额上升 + arXiv 研究热度高的技能优先。
+    找不到资源的技能不会被硬配课程；steps 可能为空。"""
     order = list(missing)
     order.sort(key=lambda s: -skill_momentum(s, skill_df, signals)[0])
     steps, seen = [], set()
@@ -1020,8 +1059,6 @@ def build_plan(missing, weekly_hours, skill_df=None, signals=None):
             steps.append((sk, *r))
         if len(steps) == 3:
             break
-    if not steps:
-        steps.append(("AI", *DEFAULT_RESOURCE))
     learn_hours = sum(s[4] for s in steps)
     project_hours, cv_hours = 8, 3
     total = learn_hours + project_hours + cv_hours
@@ -1032,6 +1069,8 @@ def build_plan(missing, weekly_hours, skill_df=None, signals=None):
 # =====================================================================
 # 匹配引擎（个人 / 团队共用）
 # =====================================================================
+SDG_W = 5  # 每个与用户所选 SDG 重合的项，在排序中加几分（假设值，只影响排序）
+
 BG_MAP = {"account": ["financ", "analyst", "risk", "audit"], "financ": ["financ", "analyst", "risk"],
           "engineer": ["engineer", "developer", "ml", "machine"], "computer": ["engineer", "developer", "data", "machine"],
           "market": ["product", "analyst", "strategy"], "business": ["product", "strategy", "analyst"],
@@ -1048,9 +1087,9 @@ def skill_match(u, s):
     return False
 
 
-def match_roles(user_skills, user_role, jobs_df, signals=None, role_shift=None, bg_w=10):
+def match_roles(user_skills, user_role, jobs_df, signals=None, role_shift=None, bg_w=10, pref_sdgs=None):
     """匹配度 = (100-bg_w)% × 技能覆盖率 + bg_w% × 背景相关度。
-    趋势加权（雷达份额变化 + arXiv 热度）只进入 rank_score 用于排序，不改变匹配度分数。"""
+    趋势加权（雷达份额变化 + arXiv 热度）和 SDG 偏好加权只进入 rank_score 用于排序，不改变匹配度分数。"""
     results = []
     role_text = (user_role or "").lower()
     role_shift = role_shift or {}
@@ -1065,17 +1104,21 @@ def match_roles(user_skills, user_role, jobs_df, signals=None, role_shift=None, 
                 bg = 1.0
         score = round((100 - bg_w) * coverage + bg_w * bg)
         hits = trend_hits(row["job_title"], signals)
-        bonus = (float(np.clip(role_shift.get(row["job_title"], 0.0) * 3, -3, 3)) + min(hits, 3) * 0.5
-                 + min(sum(1 for s in req if skill_heat(s, signals) > 0), 4) * 0.5)
+        trend_b = (float(np.clip(role_shift.get(row["job_title"], 0.0) * 3, -3, 3)) + min(hits, 3) * 0.5
+                   + min(sum(1 for s in req if skill_heat(s, signals) > 0), 4) * 0.5)
+        sdg_hit = sorted(set(role_sdg(row["job_title"])[0]) & set(pref_sdgs or []))
+        sdg_b = SDG_W * len(sdg_hit)
         results.append({**row.to_dict(), "matched": matched, "missing": missing, "coverage": coverage,
                         "bg": bg, "match_score": score, "trend_hits": hits,
-                        "trend_bonus": bonus, "rank_score": score + bonus})
+                        "trend_bonus": trend_b, "sdg_bonus": sdg_b, "sdg_hit": sdg_hit,
+                        "rank_score": score + trend_b + sdg_b})
     return pd.DataFrame(results).sort_values(["rank_score", "match_score", "postings"], ascending=False)
 
 
 def base_top(res, n=3):
-    """不含趋势信号的排序，用来对比“重新规划”前后的变化。"""
-    return res.sort_values(["match_score", "postings"], ascending=False)["job_title"].head(n).tolist()
+    """不含趋势信号的排序（但保留用户的 SDG 偏好），用来对比“重新规划”前后的变化。"""
+    tmp = res.assign(_base=res["match_score"] + res["sdg_bonus"])
+    return tmp.sort_values(["_base", "match_score", "postings"], ascending=False)["job_title"].head(n).tolist()
 
 
 def render_fairness(user_skills, jobs_df, bg_w):
@@ -1318,6 +1361,9 @@ with st.sidebar.expander(t("sb_signals")):
         mtime = datetime.date.fromtimestamp(os.path.getmtime(DATA_FILE)).isoformat()
         st.markdown(t("sb_source", url=KAGGLE_URL))
         st.write(t("sb_filedate", d=mtime))
+        period = data_period(raw_df)
+        if period:
+            st.write(t("sb_period", r=period))
         st.write(t("sb_samples", n=len(raw_df)))
     st.markdown(f"**{t('sb_src2')}**")
     if signals:
@@ -1334,8 +1380,6 @@ with st.sidebar.expander(t("sb_assump")):
     mult_fast = st.number_input(t("mult_fast"), 0.1, 5.0, 1.5, 0.1)
     spread = st.slider(t("spread"), 10, 60, 30)
 BG_W = 0 if skills_only else 10
-
-st.sidebar.caption("UI v2")
 
 # ---------- 顶部 hero ----------
 _pts = "".join(f"<span>{html.escape(x)}</span>" for x in t("hero_pts").split("|"))
@@ -1375,6 +1419,7 @@ with tab_me:
                 learn_pref = st.selectbox(t("q_pref"), [t("pref_self"), t("pref_proj"), t("pref_course")])
                 mind_opts = [t("mind_1"), t("mind_2"), t("mind_3")]
                 growth_mindset = st.select_slider(t("q_mind"), mind_opts, value=mind_opts[1])
+                pref_sdgs = st.multiselect(t("q_sdg"), list(SDG_NAMES), format_func=sdg_name, key="pref_sdgs")
 
         user_skills = split_skills(user_skills_input)
         if cv_file is not None:
@@ -1396,8 +1441,10 @@ with tab_me:
             st.header(t("h_match"))
             st.caption(t("match_cap", cw=100 - BG_W, bw=BG_W))
 
-            res_all = match_roles(user_skills, user_role, jobs_df, signals, role_shift, BG_W)
+            res_all = match_roles(user_skills, user_role, jobs_df, signals, role_shift, BG_W, pref_sdgs)
             top = res_all.head(3)
+            if pref_sdgs:
+                st.caption(t("sdg_pref_on", w=SDG_W))
 
             # 自动重新规划：对比"不含趋势信号"和"含趋势信号"的推荐
             before, after = base_top(res_all), top["job_title"].tolist()
@@ -1437,12 +1484,19 @@ with tab_me:
                 ind_txt = industry_sdg_text(row["industries"]) if isinstance(row["industries"], list) else ""
                 st.markdown(t("sdg_chain", title=title, sdg=sdg_label(sdgs), desc=sdg_desc)
                             + (t("sdg_industry", s=ind_txt) if ind_txt else ""))
+                if row["sdg_hit"]:
+                    st.caption(t("sdg_match", s=", ".join(sdg_name(n) for n in row["sdg_hit"])))
 
             # ---- 再培训路径 + 学习进度与徽章 ----
             steps, total, weeks, ph, cvh = build_plan(row["missing"], weekly_hours, skill_df, signals)
             with st.expander(t("plan_title", title=title, total=total, weeks=weeks)):
                 st.write(t("plan_time", total=total, wh=weekly_hours, weeks=weeks))
-                if skill_df is not None:
+                nores = no_resource_skills(row["missing"][:6])
+                if nores:
+                    st.warning(t("plan_nores", s=", ".join(nores)))
+                if not steps:
+                    st.info(t("plan_empty"))
+                if skill_df is not None and steps:
                     st.caption(t("plan_prior"))
                 if signals and steps:
                     parts = []
@@ -1474,7 +1528,7 @@ with tab_me:
                 badges = [t("badge_skill", s=s_) for s_ in skill_badges]
                 if n_done >= 1:
                     badges.append(t("badge_start"))
-                if learn_done == len(steps):
+                if steps and learn_done == len(steps):
                     badges.append(t("badge_builder"))
                 if n_done == n_all:
                     badges.append(t("badge_ready"))
@@ -1487,6 +1541,8 @@ with tab_me:
             with st.expander(t("why_h")):
                 st.caption(t("score_break", c=row['coverage'] * 100, cw=100 - BG_W,
                              b=t("yes") if row['bg'] else t("no"), bw=BG_W, tb=row['trend_bonus']))
+                if pref_sdgs:
+                    st.caption(t("sdg_bonus_line", b=row["sdg_bonus"]))
                 st.caption(t("src_job", n=row['postings']))
                 if signals:
                     if row["trend_hits"] > 0:
@@ -1501,7 +1557,8 @@ with tab_me:
                     for col, name, m in [(s0, t("scen_slow"), mult_slow), (s1, t("scen_mod"), mult_mod), (s2, t("scen_fast"), mult_fast)]:
                         g = base_g * m
                         col.metric(name, f"{g:+.1f}% YoY", help=t("scen_help"))
-                        col.caption(t("scen_range", lo=g * (1 - spread / 100), hi=g * (1 + spread / 100)))
+                        a_, b_ = g * (1 - spread / 100), g * (1 + spread / 100)
+                        col.caption(t("scen_range", lo=min(a_, b_), hi=max(a_, b_)))
                     st.caption(t("scen_warn"))
                 else:
                     st.caption(t("no_growth"))

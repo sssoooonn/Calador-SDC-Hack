@@ -1,155 +1,155 @@
 {
-  "fetched_at": "2026-10-21 16:06",
+  "fetched_at": "2026-10-22 13:58",
   "items": [
     {
-      "title": "Navalia: Advancing Cowork Agents through Verifiable Task Synthesis and Long-Horizon Post-Training",
-      "url": "https://arxiv.org/abs/2610.26887",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "A Small Model Asks Better: Fine-Tuning Query Clarification for Retrieval-Augmented Generation",
+      "url": "https://arxiv.org/abs/2610.28686",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "Large language model and reinforcement learning based autonomous construction and progress updates",
-      "url": "https://arxiv.org/abs/2610.26899",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "Scaling in Games: Continued Pre-Training For Embodied Agents In Diverse Virtual Worlds",
+      "url": "https://arxiv.org/abs/2610.28698",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "Pareto-Optimal RTL Code Generation via Multi-Objective Reinforcement Learning with Large Language Models",
-      "url": "https://arxiv.org/abs/2610.26904",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "SpecEvo: Speculative Evolution with Large Language Models for Cost-Efficient Scientific Discovery",
+      "url": "https://arxiv.org/abs/2610.28706",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "MedPAO-Assist: Edge-Deployable, Modality-Aware Agentic AI for Radiology Report Structuring",
-      "url": "https://arxiv.org/abs/2610.26913",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "Automating ML for Science: Can Frontier Agents Climb Scientific Hills in the Wild?",
+      "url": "https://arxiv.org/abs/2610.28763",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "DataPraxis: Scaling Analytics Tasks via Verified Workspace Evolution",
-      "url": "https://arxiv.org/abs/2610.26924",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "Forging More Tasks into Better Harnesses: Agentic Harness Evolution via Successive Scale Racing",
+      "url": "https://arxiv.org/abs/2610.28815",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "Industrial Agentic AI: LLM-Driven New-Generation Agents for Smart Manufacturing",
-      "url": "https://arxiv.org/abs/2610.26941",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "Decision language models as affordable and rapid alternatives to LLM judges of clinical generative AI",
+      "url": "https://arxiv.org/abs/2610.28826",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "Fix, Not Just Resample: Bounded Compiler-Guided Repair in Lean 4",
-      "url": "https://arxiv.org/abs/2610.26942",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "Sketch2Sim: an end-to-end modular framework for hand-drawn circuit analysis",
+      "url": "https://arxiv.org/abs/2610.28836",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "MAMath-Bench: Process-Aware and Robust Evaluation of Multimodal Multi-Agent Mathematical Reasoning",
-      "url": "https://arxiv.org/abs/2610.26943",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "Speedrunning Relational Foundation Model Pretraining",
+      "url": "https://arxiv.org/abs/2610.28855",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "LightCRS: Lightweight Multi-Domain Conversational Recommendation System",
-      "url": "https://arxiv.org/abs/2610.26948",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "To Manipulate or Not: Opinion Dynamics in LLM Interactions",
+      "url": "https://arxiv.org/abs/2610.28875",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "When Planning Problems Become Hard for LLMs: Separating Structural Complexity from Semantic Interpretability",
-      "url": "https://arxiv.org/abs/2610.26964",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "Fig: Automated Multiagent Behavior Elicitor",
+      "url": "https://arxiv.org/abs/2610.28891",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "SPEM: Structure-Aware Procedural Memory for Efficient Skill Use in LLM Agents",
-      "url": "https://arxiv.org/abs/2610.26995",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "Hidden Messages Between Diffusion Language Model Agents: Causal Evidence for Latent Communication",
+      "url": "https://arxiv.org/abs/2610.28905",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "Does Multi-Agent Collaboration Reduce Hallucination in Clinical Tasks?",
-      "url": "https://arxiv.org/abs/2610.27027",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "DiffResearch: Accelerating Deep Research with Diffusion Language Models",
+      "url": "https://arxiv.org/abs/2610.28909",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "Teaching AI Agent to Play Poker Strategically Through Preference Optimization",
-      "url": "https://arxiv.org/abs/2610.27028",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "Simply Logical -- The First Three Decades",
+      "url": "https://arxiv.org/abs/2610.28912",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "M-Plan: Comprehensive Planning For LLM Agents with Memory Arrangement",
-      "url": "https://arxiv.org/abs/2610.27032",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "D-Skill: Distilling Teacher Knowledge through Agent Skills",
+      "url": "https://arxiv.org/abs/2610.28914",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "Physical AI: Concepts, Techniques, and Challenges",
-      "url": "https://arxiv.org/abs/2610.27045",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "Back Up Before You Regret: Measuring Backup Awareness and Automating Backup in Coding Agents",
+      "url": "https://arxiv.org/abs/2610.28934",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "ReuF2F: Benchmarking Coding Agents on Formalized Undergraduate Research Problems",
-      "url": "https://arxiv.org/abs/2610.27046",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "Self-Improving Agents with World Model Predictive Paths",
+      "url": "https://arxiv.org/abs/2610.28945",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "A general-purpose System One decision model for clinical records",
-      "url": "https://arxiv.org/abs/2610.27099",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "Behavior Beyond Text: Evaluating Refusal Transfer Failure in LLM Agents",
+      "url": "https://arxiv.org/abs/2610.28982",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "Omni-Woodpecker: Hallucination Correction via Evidence-Prior Rebalancing for Omni LLMs",
-      "url": "https://arxiv.org/abs/2610.27103",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "PerMIT: Securing Persistent Memory for LLM Agents via Machine-Checked Integrity Theorems and Scalable Community Trust",
+      "url": "https://arxiv.org/abs/2610.28987",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "PROVISO: Provenance-Informed Action Selection for Secure LLM Agents",
-      "url": "https://arxiv.org/abs/2610.27115",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "AgentPolicyForge: From Executable Environments to Policy Benchmarks and Adaptive Guards",
+      "url": "https://arxiv.org/abs/2610.28989",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "PORA: Learning When More Reasoning Pays Off for LLM Agents",
-      "url": "https://arxiv.org/abs/2610.27119",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "An Evidence-Driven Multi-Agent Compound AI System for Head and Neck Proton Radiotherapy Planning",
+      "url": "https://arxiv.org/abs/2610.29010",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "EDMA: Entropy-Driven Multimodal Answering",
-      "url": "https://arxiv.org/abs/2610.27120",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "GenXR-Bench: Benchmarking Coding Agents for Interactive XR Development",
+      "url": "https://arxiv.org/abs/2610.29014",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "MoSAIK: Motion Search with Artificial Intelligence in K-space",
-      "url": "https://arxiv.org/abs/2610.27156",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "Inheritance as an Admission Test for LLM Prompt Merge Operators",
+      "url": "https://arxiv.org/abs/2610.29023",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "Learned Control Variates for Rare Grid-Outage Estimation at Electric Vehicle Charging Stations",
-      "url": "https://arxiv.org/abs/2610.27159",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "GRAIL: From Saliency to Semantics in Time-Series Explanation",
+      "url": "https://arxiv.org/abs/2610.29036",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "LSA-PAST: Layer-Specific Adaptation and Prototype Transport for Compositional Incremental Learning",
-      "url": "https://arxiv.org/abs/2610.27203",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "AutoFraming: Synthesizing Dynamic Frames of C Code with LLMs",
+      "url": "https://arxiv.org/abs/2610.29046",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "Sparse RL Relaxation for LLM Reasoning",
-      "url": "https://arxiv.org/abs/2610.27220",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "Does Every Instance Count Equally? Order Effects in LLM Multi-Instance Processing",
+      "url": "https://arxiv.org/abs/2610.29057",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "Magnolia: A Persistent-Memory Agent Framework for Computational Chemistry",
-      "url": "https://arxiv.org/abs/2610.27230",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "Context-Augmented, Session-Calibrated Blood Pressure Tracking from Photoplethysmography",
+      "url": "https://arxiv.org/abs/2610.29091",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "EGI-BENCH: An Enterprise General Intelligence Benchmark Suite",
-      "url": "https://arxiv.org/abs/2610.27234",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "Same Answer, Different Reasons: Trace-Level Divergence in Multilingual Large Language Models",
+      "url": "https://arxiv.org/abs/2610.29092",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "TxnQA: Benchmarking Analytical Reasoning and Evidence Grounding over Transaction Event Sequences",
-      "url": "https://arxiv.org/abs/2610.27256",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "GRAM: Group-wise Rank-Aware Model Merging via Subspace Alignment",
+      "url": "https://arxiv.org/abs/2610.29110",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "A latent control model for realistic rodent motion",
-      "url": "https://arxiv.org/abs/2610.27279",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "Recursive Self-Improvement on a Budget: Scoring Code Edits Before They Run",
+      "url": "https://arxiv.org/abs/2610.29121",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     },
     {
-      "title": "TEX: Test-Time Scaling Testing Agents via Execution-based Cross-Validation",
-      "url": "https://arxiv.org/abs/2610.27290",
-      "published": "Wed, 21 Oct 2026 00:00:00 -0400"
+      "title": "StochIKM: Automated High-Fidelity Reconstruction of Individual Patient Data from Published Kaplan-Meier Curves",
+      "url": "https://arxiv.org/abs/2610.29122",
+      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
     }
   ]
 }
