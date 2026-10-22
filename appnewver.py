@@ -12,6 +12,14 @@ CACHE_FILE = "trends_cache.json"
 KAGGLE_URL = "https://www.kaggle.com/datasets/alitaqishah/ai-jobs-market-2025-2026-salaries"
 ARXIV_RSS = "https://rss.arxiv.org/rss/cs.AI"
 
+# [NEW] 实时招聘信号（Arbeitnow 公开 API）
+LIVE_JOBS_URL = "https://www.arbeitnow.com/api/job-board-api"
+LIVE_CACHE = "live_jobs_cache.json"
+LIVE_MOM_W = 0.05   # 实时占比(%)进入技能动量的权重（假设值）
+LIVE_W = 0.5        # 实时需求进入岗位排序微调的权重（假设值，只影响排序）
+LIVE_MIN = 5.0      # 技能在实时广告中占比 ≥ 此值(%) 才算“有实时需求”
+LIVE_SHARE, LIVE_N, LIVE_META, LIVE_CACHED = {}, 0, {}, True
+
 UP, DOWN, FLAT = "UP", "DOWN", "FLAT"  # 语言无关的内部状态码，显示时用 status_label() 转换
 
 # =====================================================================
@@ -403,6 +411,30 @@ TXT = {
                 "Pemetaan berasaskan peraturan kata kunci (laraskan ROLE_RULES / SKILL_RULES dalam kod) — kaitan konsep yang munasabah, bukan klasifikasi rasmi. SDG seperti kehidupan bawah air atau di darat mempunyai kaitan lemah dengan jawatan AI dalam set data ini, jadi ditandakan tidak diliputi dan tidak dipaksa."),
 }
 
+# [NEW] 实时招聘信号的三语文字
+TXT.update({
+    "live_title": ("实时招聘信号（自动更新，无需用户操作）", "Live job-market signal (auto-updated, no user action)",
+                   "Isyarat pasaran pekerjaan langsung (dikemas kini automatik)"),
+    "live_src": ("**来源：** [Arbeitnow 公开招聘 API](https://www.arbeitnow.com/)（免费，无需密钥）",
+                 "**Source:** [Arbeitnow public job-board API](https://www.arbeitnow.com/) (free, no key)",
+                 "**Sumber:** [API papan pekerjaan awam Arbeitnow](https://www.arbeitnow.com/) (percuma, tiada kunci)"),
+    "live_cap": ("统计最新招聘广告中提到各技能的比例，并与数据集 2026 年的比例对比。该比例以权重 {w} 加入技能动量（影响学习计划顺序），并对岗位排序做微调（不改变匹配度分数）。",
+                 "Share of the latest job ads that mention each skill, compared with the dataset's 2026 share. It is added to skill momentum with weight {w} (affecting learning-plan order) and fine-tunes role ranking (the match score is unchanged).",
+                 "Peratus iklan pekerjaan terkini yang menyebut setiap kemahiran, dibandingkan dengan bahagian set data 2026. Ia ditambah kepada momentum kemahiran dengan pemberat {w} (mempengaruhi susunan pelan pembelajaran) dan melaraskan susunan jawatan (skor padanan tidak berubah)."),
+    "live_n": ("分析的招聘广告数：{n}", "Job ads analysed: {n}", "Iklan pekerjaan dianalisis: {n}"),
+    "live_when": ("抓取时间：{ts}", "Fetched: {ts}", "Diambil: {ts}"),
+    "live_range": ("广告发布日期范围：{r}", "Ad posting dates: {r}", "Tarikh iklan: {r}"),
+    "live_none": ("实时招聘来源暂不可用，且暂无缓存；系统改用数据集趋势。",
+                  "Live job source unavailable and no cache yet; the system falls back to dataset trends.",
+                  "Sumber pekerjaan langsung tidak tersedia dan tiada cache; sistem menggunakan trend set data."),
+    "live_col_live": ("实时占比(%)", "Live share (%)", "Peratus langsung (%)"),
+    "live_col_ds": ("数据集2026占比(%)", "Dataset 2026 share (%)", "Peratus set data 2026 (%)"),
+    "live_col_diff": ("差值(pp)", "Difference (pp)", "Perbezaan (pp)"),
+    "live_bias": ("局限：该来源以欧洲/德语区（含远程）科技岗位为主，不代表马来西亚市场；只作为“实时需求信号”，不是预测。",
+                  "Limitation: this source is mostly European/German-speaking tech jobs (including remote), not the Malaysian market; it is a live demand signal, not a forecast.",
+                  "Had: sumber ini kebanyakannya pekerjaan teknologi Eropah/negara berbahasa Jerman (termasuk jarak jauh), bukan pasaran Malaysia; ia isyarat permintaan langsung, bukan ramalan."),
+})
+
 
 # 极简风：去掉标题里的 emoji；趋势用 ▲ ▼ 表示
 _ARROWS = {"📈 ": "▲ ", "📉 ": "▼ ", "➖ ": "— "}
@@ -596,7 +628,7 @@ def trend_hits(title, signals):
     return sum(1 for sg in signals if any(k in sg["title"].lower() for k in kws))
 
 
-# ---- 技能动量：招聘份额变化 + arXiv 研究热度 ----
+# ---- 技能动量：招聘份额变化 + arXiv 研究热度 + 实时招聘占比 ----
 HEAT_W = 0.1  # 研究热度的权重（假设值，可调）
 SKILL_SYN = {
     "llm": ["llm", "language model"], "prompt": ["prompt"],
@@ -639,7 +671,8 @@ def skill_momentum(skill, skill_df, signals):
     n = len(signals) if signals else 0
     h = skill_heat(skill, signals)
     pct = h / n * 100 if n else 0.0
-    return shift + HEAT_W * pct, shift, h
+    # [CHANGED] 加入实时招聘占比
+    return shift + HEAT_W * pct + LIVE_MOM_W * LIVE_SHARE.get(skill, 0.0), shift, h
 
 
 # =====================================================================
@@ -1089,7 +1122,7 @@ def skill_match(u, s):
 
 def match_roles(user_skills, user_role, jobs_df, signals=None, role_shift=None, bg_w=10, pref_sdgs=None):
     """匹配度 = (100-bg_w)% × 技能覆盖率 + bg_w% × 背景相关度。
-    趋势加权（雷达份额变化 + arXiv 热度）和 SDG 偏好加权只进入 rank_score 用于排序，不改变匹配度分数。"""
+    趋势加权（雷达份额变化 + arXiv 热度 + 实时招聘需求）和 SDG 偏好加权只进入 rank_score 用于排序，不改变匹配度分数。"""
     results = []
     role_text = (user_role or "").lower()
     role_shift = role_shift or {}
@@ -1106,6 +1139,8 @@ def match_roles(user_skills, user_role, jobs_df, signals=None, role_shift=None, 
         hits = trend_hits(row["job_title"], signals)
         trend_b = (float(np.clip(role_shift.get(row["job_title"], 0.0) * 3, -3, 3)) + min(hits, 3) * 0.5
                    + min(sum(1 for s in req if skill_heat(s, signals) > 0), 4) * 0.5)
+        # [NEW] 实时招聘需求：所需技能中有多少在实时广告里占比 ≥ LIVE_MIN（最多计 4 个）
+        trend_b += LIVE_W * min(sum(1 for s in req if LIVE_SHARE.get(s, 0.0) >= LIVE_MIN), 4)
         sdg_hit = sorted(set(role_sdg(row["job_title"])[0]) & set(pref_sdgs or []))
         sdg_b = SDG_W * len(sdg_hit)
         results.append({**row.to_dict(), "matched": matched, "missing": missing, "coverage": coverage,
@@ -1336,6 +1371,89 @@ def render_team_mode(jobs_df, role_df, skill_df, signals, bg_w):
 
 
 # =====================================================================
+# [NEW] 实时招聘信号（Arbeitnow 公开 API；失败或低流量模式时用本地缓存）
+# =====================================================================
+def read_live_cache():
+    if os.path.exists(LIVE_CACHE):
+        try:
+            with open(LIVE_CACHE, encoding="utf-8") as f:
+                c = json.load(f)
+            return c["items"], c["meta"], True
+        except Exception:
+            pass
+    return [], {}, True
+
+
+def fetch_live_jobs():
+    import urllib.request
+    try:
+        items, stamps = [], []
+        for page in (1, 2, 3):
+            req = urllib.request.Request(f"{LIVE_JOBS_URL}?page={page}", headers={"User-Agent": "Aiversecity-demo/1.0"})
+            with urllib.request.urlopen(req, timeout=10) as r:
+                data = json.loads(r.read().decode("utf-8")).get("data", [])
+            if not data:
+                break
+            for j in data:
+                body = html.unescape(re.sub(r"<[^>]+>", " ", j.get("description") or ""))
+                text = " ".join([j.get("title") or "", " ".join(j.get("tags") or []), body[:1200]]).lower()
+                items.append({"title": j.get("title") or "", "url": j.get("url") or "", "text": text})
+                if j.get("created_at"):
+                    stamps.append(int(j["created_at"]))
+        if not items:
+            raise ValueError("empty")
+
+        def day(ts):
+            return datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d")
+
+        meta = {"fetched_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+                "oldest": day(min(stamps)) if stamps else "?", "newest": day(max(stamps)) if stamps else "?"}
+        with open(LIVE_CACHE, "w", encoding="utf-8") as f:
+            json.dump({"meta": meta, "items": items}, f, ensure_ascii=False)
+        return items, meta, False
+    except Exception:
+        return read_live_cache()
+
+
+@st.cache_data(ttl=3600)
+def load_live_jobs(lite):
+    return read_live_cache() if lite else fetch_live_jobs()
+
+
+@st.cache_data(ttl=3600)
+def live_skill_share(items, vocab_t):
+    """每个技能被多少 % 的实时广告提到（至少 3 条才计入，避免噪音）。"""
+    if not items:
+        return {}, 0
+    cnt = Counter()
+    for it in items:
+        cnt.update(set(detect_skills(it["text"], vocab_t)))
+    n = len(items)
+    return {k: v / n * 100 for k, v in cnt.items() if v >= 3}, n
+
+
+def render_live_panel(skill_df):
+    st.subheader(t("live_title"))
+    if not LIVE_N:
+        st.info(t("live_none"))
+        return
+    st.markdown(t("live_src"))
+    st.caption(t("live_cap", w=LIVE_MOM_W))
+    st.write(t("live_n", n=LIVE_N))
+    st.write(t("live_when", ts=LIVE_META.get("fetched_at", "N/A")) + (t("cached") if LIVE_CACHED else ""))
+    st.write(t("live_range", r=f"{LIVE_META.get('oldest', '?')} → {LIVE_META.get('newest', '?')}"))
+    base = dict(zip(skill_df["skill"], skill_df["share26"])) if skill_df is not None else {}
+    rows = []
+    for s, v in sorted(LIVE_SHARE.items(), key=lambda kv: -kv[1])[:10]:
+        b = base.get(s)
+        rows.append({t("col_skill"): s, t("live_col_live"): round(v, 1),
+                     t("live_col_ds"): None if b is None else round(b, 1),
+                     t("live_col_diff"): None if b is None else round(v - b, 1)})
+    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    st.caption(t("live_bias"))
+
+
+# =====================================================================
 # 页面开始（侧边栏：语言、低流量模式放最前面）
 # =====================================================================
 lang_name = st.sidebar.selectbox("Language / 语言 / Bahasa", list(LANGS), index=0, key="lang")
@@ -1345,6 +1463,9 @@ inject_css(LITE)
 
 raw_df, jobs_df, vocab = load_data()
 signals, fetched_at, from_cache = load_signals(LITE)
+# [NEW] 实时招聘信号
+live_items, LIVE_META, LIVE_CACHED = load_live_jobs(LITE)
+LIVE_SHARE, LIVE_N = live_skill_share(live_items, tuple(sorted(vocab))) if vocab else ({}, 0)
 role_df, skill_df, trend_meta = compute_trends(raw_df) if raw_df is not None else (None, None, {})
 role_shift = dict(zip(role_df["role"], role_df["shift_pp"])) if role_df is not None else {}
 
@@ -1569,6 +1690,7 @@ with tab_me:
     # ======================= 市场趋势 =======================
     with sub_trend:
         render_radar(role_df, skill_df, trend_meta, user_skills, signals)
+        render_live_panel(skill_df)  # [NEW]
 
     # ======================= 公平与来源 =======================
     with sub_trust:
