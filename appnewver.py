@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import altair as alt
-import os, re, json, math, datetime, html
+import os, re, json, math, datetime, html, io, unicodedata
 from collections import Counter
 
 st.set_page_config(page_title="Aiversecity - AI Career Navigator", layout="wide")
@@ -436,6 +436,18 @@ TXT.update({
 })
 
 
+# [NEW] CV 识别反馈文字（cv_none 在此覆盖为更详细的说明）
+TXT.update({
+    "cv_empty": ("没有从 CV 中读到任何文字。如果是扫描版 PDF（图片），系统无法识别，请改用可复制文字的 PDF、DOCX 或 TXT。",
+                 "No text could be read from the CV. If it is a scanned (image) PDF the system cannot read it — please use a PDF with selectable text, a DOCX or a TXT file.",
+                 "Tiada teks dapat dibaca daripada CV. Jika ia PDF imbasan (imej), sistem tidak dapat membacanya — sila guna PDF dengan teks boleh dipilih, DOCX atau TXT."),
+    "cv_chars": ("已读取 CV 文字 {n} 个字符。", "Read {n} characters of text from the CV.", "Membaca {n} aksara teks daripada CV."),
+    "cv_none": ("CV 已读取，但没有识别到数据集中的技能词。系统只识别数据集中出现过的技能名称（例如 python、sql、excel），请在左边的技能框里手动补充。",
+                "The CV was read, but no skill names from the dataset were found. The system only recognises skill names that appear in the dataset (e.g. python, sql, excel) — please add your skills manually in the skills box.",
+                "CV dibaca, tetapi tiada nama kemahiran daripada set data dijumpai. Sistem hanya mengenali nama kemahiran dalam set data (cth. python, sql, excel) — sila tambah kemahiran anda secara manual dalam kotak kemahiran."),
+})
+
+
 # 极简风：去掉标题里的 emoji；趋势用 ▲ ▼ 表示
 _ARROWS = {"📈 ": "▲ ", "📉 ": "▼ ", "➖ ": "— "}
 _EMOJI_LEAD = re.compile(r"^(\*\*)?(?:[\U0001F000-\U0001FFFF\u2600-\u27BF\uFE0F\u200d]+\s*)+")
@@ -556,6 +568,19 @@ def box(prefix, idx=None):
         return st.container(key=key)
     except TypeError:
         return st.container(border=True)
+
+
+def step_check(label_md, key):
+    """勾选框和文字分开放：点文字里的链接只会打开链接，不会误触勾选。"""
+    try:
+        c1, c2 = st.columns([1, 14], vertical_alignment="center")
+    except TypeError:  # 旧版 Streamlit 没有 vertical_alignment
+        c1, c2 = st.columns([1, 14])
+    with c1:
+        ok = st.checkbox("done", key=key, label_visibility="collapsed")
+    with c2:
+        st.markdown(label_md)
+    return ok
 
 
 # =====================================================================
@@ -875,27 +900,42 @@ def render_radar(role_df, skill_df, meta, user_skills, signals=None):
 # =====================================================================
 def extract_cv_text(uploaded):
     name = uploaded.name.lower()
+    data = uploaded.getvalue()  # 每次从头读，避免 Streamlit 重跑时文件指针已在末尾
     try:
         if name.endswith(".txt") or name.endswith(".md"):
-            return uploaded.read().decode("utf-8", errors="ignore")
+            return data.decode("utf-8", errors="ignore")
         if name.endswith(".pdf"):
             from pypdf import PdfReader
-            return "\n".join((p.extract_text() or "") for p in PdfReader(uploaded).pages)
+            return "\n".join((p.extract_text() or "") for p in PdfReader(io.BytesIO(data)).pages)
         if name.endswith(".docx"):
             import docx
-            return "\n".join(p.text for p in docx.Document(uploaded).paragraphs)
+            d = docx.Document(io.BytesIO(data))
+            parts = [p.text for p in d.paragraphs]
+            for tb in d.tables:  # 很多 CV 把技能放在表格里
+                for r in tb.rows:
+                    for c in r.cells:
+                        parts.append(c.text)
+            return "\n".join(parts)
     except Exception as e:
         st.warning(t("cv_fail", e=e))
     return ""
 
 
+def _norm(s):
+    """统一写法：全角转半角、小写、标点换成空格、合并空白（让换行 / 连字符 / 项目符号不影响匹配）。"""
+    s = unicodedata.normalize("NFKC", str(s)).lower()
+    s = re.sub(r"[^\w+#.]+", " ", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
 def detect_skills(text, vocab):
-    text = text.lower()
+    text = " " + _norm(text) + " "
     found = []
     for sk in vocab:
-        if len(sk) < 3:
+        n = _norm(sk)
+        if len(n) < 3:
             continue
-        if re.search(r"(?<![a-z0-9])" + re.escape(sk) + r"(?![a-z0-9])", text):
+        if re.search(r"(?<![a-z0-9])" + re.escape(n) + r"(?![a-z0-9])", text):
             found.append(sk)
     return sorted(found)
 
@@ -1564,12 +1604,16 @@ with tab_me:
         user_skills = split_skills(user_skills_input)
         if cv_file is not None:
             cv_text = extract_cv_text(cv_file)
-            cv_found = detect_skills(cv_text, vocab)
-            if cv_found:
-                st.success(t("cv_found", n=len(cv_found), s=', '.join(cv_found[:15])))
-                user_skills |= set(cv_found)
-            elif cv_text:
-                st.info(t("cv_none"))
+            if not cv_text.strip():
+                st.warning(t("cv_empty"))
+            else:
+                st.caption(t("cv_chars", n=len(cv_text)))
+                cv_found = detect_skills(cv_text, vocab)
+                if cv_found:
+                    st.success(t("cv_found", n=len(cv_found), s=', '.join(cv_found[:15])))
+                    user_skills |= set(cv_found)
+                else:
+                    st.info(t("cv_none"))
 
         st.markdown("---")
 
@@ -1646,18 +1690,18 @@ with tab_me:
                     st.caption(t("plan_why", s="；".join(parts)))
                 done_flags, done_hours, learn_done, skill_badges = [], 0, 0, []
                 for sk, name, url, cost, hrs in steps:
-                    label = f"{len(done_flags) + 1}. " + t("plan_skill", sk=sk, name=name, url=url, cost=t(cost), h=hrs,
-                                                            sdg='/'.join(map(str, skill_sdg(sk))))
-                    ok = st.checkbox(label, key=f"prog_{title}_{sk}")
+                    label = f"{len(done_flags) + 1}\\. " + t("plan_skill", sk=sk, name=name, url=url, cost=t(cost), h=hrs,
+                                                              sdg='/'.join(map(str, skill_sdg(sk))))
+                    ok = step_check(label, f"prog_{title}_{sk}")
                     done_flags.append(ok)
                     if ok:
                         done_hours += hrs
                         learn_done += 1
                         skill_badges.append(sk)
-                ok = st.checkbox(f"{len(done_flags) + 1}. " + t("plan_project", title=title, h=ph), key=f"prog_{title}_project")
+                ok = step_check(f"{len(done_flags) + 1}\\. " + t("plan_project", title=title, h=ph), f"prog_{title}_project")
                 done_flags.append(ok)
                 done_hours += ph if ok else 0
-                ok = st.checkbox(f"{len(done_flags) + 1}. " + t("plan_cv", h=cvh), key=f"prog_{title}_cv")
+                ok = step_check(f"{len(done_flags) + 1}\\. " + t("plan_cv", h=cvh), f"prog_{title}_cv")
                 done_flags.append(ok)
                 done_hours += cvh if ok else 0
 
