@@ -44,6 +44,29 @@ Keep these files in the same folder as the app:
 | `live_jobs_cache.json` | Cached live job ads, used when the live job source is unavailable (created automatically) |
 | `requirements.txt` | Python dependencies |
 
+
+## How to run
+
+### Option A: Live app (no setup)
+
+Open the deployed app: **https://calador-sdc-hack.replit.app**
+
+### Option B: Run on Replit
+
+1. Open the Replit project (or import this repo via **Create Repl → Import from GitHub**).
+2. Make sure `appnewver.py`, `ai_jobs_market_2025_2026.csv` and `requirements.txt` are in the project root.
+3. Click **Run**. Replit installs the dependencies from `requirements.txt` and starts the app with:
+   ```bash
+   streamlit run appnewver.py --server.address 0.0.0.0 --server.port 8080
+   ```
+4. The app opens in the Replit preview pane. Use **Open in new tab** for a full-page view.
+
+### Option C: Run locally
+
+See **Quick start** above.
+
+> No API keys or secrets are needed. The live data sources (arXiv RSS, Arbeitnow API) are free and keyless. If they are unreachable, the app falls back to the cached JSON files, or you can turn on **Low-bandwidth mode**.
+
 ## How the 6 must-have features are delivered
 
 | # | Feature | Implementation |
@@ -80,6 +103,17 @@ Only public, open or synthetic data is used. No real personal data or real CVs a
 - Every recommendation shows the source of its data (dataset and number of postings, arXiv signals and live job ads with fetch time).
 - The system does not invent jobs, courses or statistics. When data is missing, it says so (for example, scenarios are only shown when the dataset has a growth rate, and skills without a matching resource are listed as such).
 - CV files are processed in memory for the current session only and are not stored. Please upload only synthetic / sample CVs.
+
+## How we used Replit
+
+Replit was our single environment for building, debugging and deploying Calador.
+
+| Stage | How we used Replit |
+|---|---|
+| **Build** | Wrote and previewed the Streamlit app (`appnewver.py`) in the browser editor, with the live preview pane to test each feature as we built it. Dependencies were managed through `requirements.txt`. |
+| **Solve problems** | Used the Replit console and logs to find and fix errors ). Replit's built-in AI assistance was used to help us debug and fix issues. |
+| **Deploy** | Published the app with Replit Deployments so it runs at a public URL without local setup: **https://calador-sdc-hack.replit.app**. |
+
 
 ## Known limitations and risks
 
