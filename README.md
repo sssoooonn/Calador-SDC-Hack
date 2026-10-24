@@ -11,7 +11,7 @@
 
 | Resource          | Link                                                                           |
 | ----------------- | -------------------------------------------------------------------------------|
-| GitHub Repository | https://github.com/sssooonn/Calador-SDC-Hack                                   |
+| GitHub Repository | https://github.com/sssoooonn/Calador-SDC-Hack                                   |
 | Replit Project    | https://calador-sdc-hack.replit.app                                            |
 | Live Demo         |                                                                                |
 | RunPod Endpoint   | N/A                                                                            |
