@@ -1,13 +1,11 @@
-## Team Information
-
-| Field                  | Details                                                        |
-| ---------------------- | -------------------------------------------------------------- |
-| **Team Name**          | Calador                                                        |
-| **Team Domain**        | Domain 1                                                       |
-| **SDG Track (1-17)**   | SDG 8 – Decent Work and Economic Growth                        |
-| **Team Leader**        | Soon Yen Ling                                                  |
-| **University**         | TARUMT , UTAR                                                  |
-| **Number of Members**  | 4                                                              |
+| Field                  | Details                                                                                                                |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Team Name**          | Calador                                                                                                                |
+| **Team Domain**        | Domain 1                                                                                                               |
+| **SDG Track (1-17)**   | SDG 8 (Decent Work & Economic Growth), SDG 4 (Quality Education), SDG 10 (Reduced Inequalities), SDG 9 (Industry, Innovation & Infrastructure) |
+| **Team Leader**        | Soon Yen Ling                                                                                                          |
+| **University**         | TARUMT, UTAR                                                                                                           |
+| **Number of Members**  | 4                                                                                                                      |
 
 ## Links
 
