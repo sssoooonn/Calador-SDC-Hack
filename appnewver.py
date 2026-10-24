@@ -448,6 +448,35 @@ TXT.update({
 })
 
 
+# [NEW] 潜力问卷如何影响结果
+TXT.update({
+    "q_used": ("问卷如何影响结果：每周 {wh} 小时 → 学习计划最多安排 {k} 项课程，并据此估算周数；学习方式「{p}」→ {pe}；学习意愿「{g}」→ {ge}。这些规则是我们设定的假设，只影响排序和学习计划，不改变匹配度分数。",
+               "How your answers are used: {wh} hours/week → the plan includes up to {k} courses and the weeks are estimated from it; learning style “{p}” → {pe}; willingness “{g}” → {ge}. These rules are our assumptions; they only affect ranking and the learning plan, never the match score.",
+               "Bagaimana jawapan anda digunakan: {wh} jam/minggu → pelan mengandungi sehingga {k} kursus dan minggu dianggar daripadanya; gaya pembelajaran “{p}” → {pe}; kesediaan “{g}” → {ge}. Peraturan ini ialah andaian kami; ia hanya menjejaskan susunan dan pelan pembelajaran, bukan skor padanan."),
+    "eff_self": ("优先安排免费的资源", "free resources come first", "sumber percuma didahulukan"),
+    "eff_proj": ("偏重动手练习的资源排前面，实操项目提前到第 1 步并加到 12 小时",
+                 "hands-on resources come first, and the project moves to step 1 and grows to 12 hours",
+                 "sumber praktikal didahulukan, projek dipindahkan ke langkah 1 dan menjadi 12 jam"),
+    "eff_course": ("优先安排结构化课程，简历步骤会提醒写入已完成的课程/证书",
+                   "structured courses come first, and the CV step reminds you to list completed courses/certificates",
+                   "kursus berstruktur didahulukan, dan langkah CV mengingatkan anda menyenaraikan kursus/sijil yang selesai"),
+    "eff_mind_1": ("先补用时短的技能（快速见效），趋势信号在岗位排序中的权重减半（更偏向成熟岗位）",
+                   "skills that take less time come first, and trend signals count half in role ranking (favours established roles)",
+                   "kemahiran yang singkat didahulukan, dan isyarat trend dikira separuh dalam susunan jawatan (lebih memihak jawatan mantap)"),
+    "eff_mind_2": ("按技能动量排序，趋势信号权重正常",
+                   "skills are ordered by momentum, and trend signals count normally",
+                   "kemahiran disusun mengikut momentum, dan isyarat trend dikira seperti biasa"),
+    "eff_mind_3": ("按技能动量排序并多安排 1 项课程，趋势信号权重提高 50%（更偏向上升岗位）",
+                   "skills are ordered by momentum with 1 extra course, and trend signals count 50% more (favours rising roles)",
+                   "kemahiran disusun mengikut momentum dengan 1 kursus tambahan, dan isyarat trend dikira 50% lebih (lebih memihak jawatan meningkat)"),
+    "plan_prior_quick": ("已按用时从短到长排序：先补快速见效的技能。", "Ordered by time needed: quick wins come first.",
+                         "Disusun mengikut masa diperlukan: kemahiran yang cepat dahulu."),
+    "plan_cv_course": ("简历重构与投递：把新技能、项目和已完成的课程/证书写进 CV · 约 {h} 小时",
+                       "Rework your CV: add the new skills, the project and the courses/certificates you completed · about {h} hours",
+                       "Susun semula CV: tambah kemahiran, projek dan kursus/sijil yang selesai · kira-kira {h} jam"),
+})
+
+
 # 极简风：去掉标题里的 emoji；趋势用 ▲ ▼ 表示
 _ARROWS = {"📈 ": "▲ ", "📉 ": "▼ ", "➖ ": "— "}
 _EMOJI_LEAD = re.compile(r"^(\*\*)?(?:[\U0001F000-\U0001FFFF\u2600-\u27BF\uFE0F\u200d]+\s*)+")
@@ -1119,21 +1148,44 @@ def no_resource_skills(skills):
     return [s for s in skills if pick_resource(s) is None]
 
 
-def build_plan(missing, weekly_hours, skill_df=None, signals=None):
-    """missing 按动量排序：招聘份额上升 + arXiv 研究热度高的技能优先。
-    找不到资源的技能不会被硬配课程；steps 可能为空。"""
+# 潜力问卷 → 规则（均为我们设定的假设）
+STRUCTURED_RES = {"Google · Machine Learning Crash Course", "Elements of AI (includes AI ethics)",
+                  "Coursera · AI For Everyone", "DeepLearning.AI · Short Courses"}
+MIND_TREND_W = {"mind_1": 0.5, "mind_2": 1.0, "mind_3": 1.5}  # 学习意愿 → 趋势信号在岗位排序中的权重
+
+
+def plan_size(weekly_hours, mind="mind_2"):
+    """每周可学时间越少，计划里的课程越少；学习意愿很高再多加 1 项。"""
+    k = 2 if weekly_hours <= 4 else (3 if weekly_hours < 10 else 4)
+    return k + (1 if mind == "mind_3" else 0)
+
+
+def build_plan(missing, weekly_hours, skill_df=None, signals=None, pref=None, mind="mind_2", max_skills=3):
+    """默认按动量排序：招聘份额上升 + arXiv 研究热度 + 实时需求高的技能优先。
+    pref（self / proj / course）调整资源顺序和项目时长；mind=mind_1 时改为先补用时短的技能。
+    找不到资源的技能不会被硬配课程；steps 可能为空。pref=None 时保持原行为（团队模式用）。"""
     order = list(missing)
-    order.sort(key=lambda s: -skill_momentum(s, skill_df, signals)[0])
-    steps, seen = [], set()
+    if mind == "mind_1":
+        order.sort(key=lambda s: ((pick_resource(s) or (None, None, None, 99))[3],
+                                  -skill_momentum(s, skill_df, signals)[0]))
+    else:
+        order.sort(key=lambda s: -skill_momentum(s, skill_df, signals)[0])
+    cands, seen = [], set()
     for sk in order:
         r = pick_resource(sk)
         if r and r[0] not in seen:
             seen.add(r[0])
-            steps.append((sk, *r))
-        if len(steps) == 3:
-            break
+            cands.append((sk, *r))
+    # c = (skill, name, url, cost, hours)；sort 是稳定排序，同一偏好内保持上面的顺序
+    if pref == "self":
+        cands.sort(key=lambda c: 0 if c[3] == "c_free" else 1)
+    elif pref == "course":
+        cands.sort(key=lambda c: 0 if c[1] in STRUCTURED_RES else 1)
+    elif pref == "proj":
+        cands.sort(key=lambda c: 1 if c[1] in STRUCTURED_RES else 0)
+    steps = cands[:max_skills]
     learn_hours = sum(s[4] for s in steps)
-    project_hours, cv_hours = 8, 3
+    project_hours, cv_hours = (12 if pref == "proj" else 8), 3
     total = learn_hours + project_hours + cv_hours
     weeks = max(1, math.ceil(total / max(1, weekly_hours)))
     return steps, total, weeks, project_hours, cv_hours
@@ -1172,7 +1224,7 @@ def skill_match(u, s):
     return False
 
 
-def match_roles(user_skills, user_role, jobs_df, signals=None, role_shift=None, bg_w=10, pref_sdgs=None):
+def match_roles(user_skills, user_role, jobs_df, signals=None, role_shift=None, bg_w=10, pref_sdgs=None, trend_w=1.0):
     """匹配度 = (100-bg_w)% × 技能覆盖率 + bg_w% × 背景相关度。
     趋势加权（雷达份额变化 + arXiv 热度 + 实时招聘需求）和 SDG 偏好加权只进入 rank_score 用于排序，不改变匹配度分数。"""
     results = []
@@ -1193,6 +1245,7 @@ def match_roles(user_skills, user_role, jobs_df, signals=None, role_shift=None, 
                    + min(sum(1 for s in req if skill_heat(s, signals) > 0), 4) * 0.5)
         # [NEW] 实时招聘需求：所需技能中有多少在实时广告里占比 ≥ LIVE_MIN（最多计 4 个）
         trend_b += LIVE_W * min(sum(1 for s in req if LIVE_SHARE.get(s, 0.0) >= LIVE_MIN), 4)
+        trend_b *= trend_w  # [NEW] 学习意愿：越愿意学新技术，趋势信号在排序中越重要
         sdg_hit = sorted(set(role_sdg(row["job_title"])[0]) & set(pref_sdgs or []))
         sdg_b = SDG_W * len(sdg_hit)
         results.append({**row.to_dict(), "matched": matched, "missing": missing, "coverage": coverage,
@@ -1596,9 +1649,11 @@ with tab_me:
             with col2:
                 st.markdown(t("q_title"))
                 weekly_hours = st.slider(t("q_hours"), 2, 20, 5)
-                learn_pref = st.selectbox(t("q_pref"), [t("pref_self"), t("pref_proj"), t("pref_course")])
-                mind_opts = [t("mind_1"), t("mind_2"), t("mind_3")]
-                growth_mindset = st.select_slider(t("q_mind"), mind_opts, value=mind_opts[1])
+                # 内部用语言无关的代码（self / proj / course；mind_1/2/3），显示文字随语言切换
+                learn_pref = st.selectbox(t("q_pref"), ["self", "proj", "course"],
+                                          format_func=lambda k: t("pref_" + k), key="learn_pref")
+                growth_mindset = st.select_slider(t("q_mind"), ["mind_1", "mind_2", "mind_3"], value="mind_2",
+                                                  format_func=lambda k: t(k), key="growth_mindset")
                 pref_sdgs = st.multiselect(t("q_sdg"), list(SDG_NAMES), format_func=sdg_name, key="pref_sdgs")
 
         user_skills = split_skills(user_skills_input)
@@ -1624,8 +1679,12 @@ with tab_me:
         if st.session_state.get("run"):
             st.header(t("h_match"))
             st.caption(t("match_cap", cw=100 - BG_W, bw=BG_W))
+            st.caption(t("q_used", wh=weekly_hours, k=plan_size(weekly_hours, growth_mindset),
+                         p=t("pref_" + learn_pref), pe=t("eff_" + learn_pref),
+                         g=t(growth_mindset), ge=t("eff_" + growth_mindset)))
 
-            res_all = match_roles(user_skills, user_role, jobs_df, signals, role_shift, BG_W, pref_sdgs)
+            res_all = match_roles(user_skills, user_role, jobs_df, signals, role_shift, BG_W, pref_sdgs,
+                                  trend_w=MIND_TREND_W[growth_mindset])
             top = res_all.head(3)
             if pref_sdgs:
                 st.caption(t("sdg_pref_on", w=SDG_W))
@@ -1672,7 +1731,9 @@ with tab_me:
                     st.caption(t("sdg_match", s=", ".join(sdg_name(n) for n in row["sdg_hit"])))
 
             # ---- 再培训路径 + 学习进度与徽章 ----
-            steps, total, weeks, ph, cvh = build_plan(row["missing"], weekly_hours, skill_df, signals)
+            steps, total, weeks, ph, cvh = build_plan(row["missing"], weekly_hours, skill_df, signals,
+                                                      pref=learn_pref, mind=growth_mindset,
+                                                      max_skills=plan_size(weekly_hours, growth_mindset))
             with st.expander(t("plan_title", title=title, total=total, weeks=weeks)):
                 st.write(t("plan_time", total=total, wh=weekly_hours, weeks=weeks))
                 nores = no_resource_skills(row["missing"][:6])
@@ -1681,14 +1742,23 @@ with tab_me:
                 if not steps:
                     st.info(t("plan_empty"))
                 if skill_df is not None and steps:
-                    st.caption(t("plan_prior"))
-                if signals and steps:
+                    st.caption(t("plan_prior_quick") if growth_mindset == "mind_1" else t("plan_prior"))
+                if signals and steps and growth_mindset != "mind_1":
                     parts = []
                     for sk, *_ in steps:
                         _, sh, h = skill_momentum(sk, skill_df, signals)
                         parts.append(f"{sk}（{sh:+.1f}pp ｜ {h}/{len(signals)}）")
                     st.caption(t("plan_why", s="；".join(parts)))
                 done_flags, done_hours, learn_done, skill_badges = [], 0, 0, []
+
+                def _proj_step():
+                    ok_ = step_check(f"{len(done_flags) + 1}\\. " + t("plan_project", title=title, h=ph),
+                                     f"prog_{title}_project")
+                    done_flags.append(ok_)
+                    return ph if ok_ else 0
+
+                if learn_pref == "proj":
+                    done_hours += _proj_step()
                 for sk, name, url, cost, hrs in steps:
                     label = f"{len(done_flags) + 1}\\. " + t("plan_skill", sk=sk, name=name, url=url, cost=t(cost), h=hrs,
                                                               sdg='/'.join(map(str, skill_sdg(sk))))
@@ -1698,10 +1768,10 @@ with tab_me:
                         done_hours += hrs
                         learn_done += 1
                         skill_badges.append(sk)
-                ok = step_check(f"{len(done_flags) + 1}\\. " + t("plan_project", title=title, h=ph), f"prog_{title}_project")
-                done_flags.append(ok)
-                done_hours += ph if ok else 0
-                ok = step_check(f"{len(done_flags) + 1}\\. " + t("plan_cv", h=cvh), f"prog_{title}_cv")
+                if learn_pref != "proj":
+                    done_hours += _proj_step()
+                ok = step_check(f"{len(done_flags) + 1}\\. " + t("plan_cv_course" if learn_pref == "course" else "plan_cv", h=cvh),
+                                f"prog_{title}_cv")
                 done_flags.append(ok)
                 done_hours += cvh if ok else 0
 
@@ -1717,7 +1787,6 @@ with tab_me:
                 if n_done == n_all:
                     badges.append(t("badge_ready"))
                 st.write("  \n".join(badges) if badges else t("badge_none"))
-                st.caption(t("plan_cap", p=learn_pref, g=growth_mindset))
                 st.caption(t("plan_note"))
                 st.markdown(t("hrd"))
 
