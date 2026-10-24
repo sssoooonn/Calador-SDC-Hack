@@ -12,8 +12,8 @@
 | Resource          | Link                                                                           |
 | ----------------- | -------------------------------------------------------------------------------|
 | GitHub Repository | https://github.com/sssoooonn/Calador-SDC-Hack                                   |
-| Replit Project    | https://calador-sdc-hack.replit.app                                            |
-| Live Demo         |                                                                                |
+| Replit Project    | https://replit.com/@soonyling5/Calador-SDC-Hack                                            |
+| Live Demo         | https://calador-sdc-hack.replit.app                                                                               |
 | RunPod Endpoint   | N/A                                                                            |
 | Slide Deck        | https://www.canva.com/design/DAHY534_36s/ZufM7Ieu6j9eMtLVq6_O7A/edit           |
 | Demo Video        |                                                                                |
