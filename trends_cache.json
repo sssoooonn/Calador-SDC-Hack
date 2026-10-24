@@ -1,155 +1,155 @@
 {
-  "fetched_at": "2026-10-22 14:45",
+  "fetched_at": "2026-10-24 12:11",
   "items": [
     {
-      "title": "A Small Model Asks Better: Fine-Tuning Query Clarification for Retrieval-Augmented Generation",
-      "url": "https://arxiv.org/abs/2610.28686",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "Direct Pass@$k$ Optimization for Thought Pruning: Balancing Quality and Diversity in Test-Time Reasoning",
+      "url": "https://arxiv.org/abs/2610.31667v1",
+      "published": "2026-10-22T17:59:48Z"
     },
     {
-      "title": "Scaling in Games: Continued Pre-Training For Embodied Agents In Diverse Virtual Worlds",
-      "url": "https://arxiv.org/abs/2610.28698",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "Cost-Aware Abstention for LLM-Based IT Ticket Classification",
+      "url": "https://arxiv.org/abs/2610.31657v1",
+      "published": "2026-10-22T17:58:52Z"
     },
     {
-      "title": "SpecEvo: Speculative Evolution with Large Language Models for Cost-Efficient Scientific Discovery",
-      "url": "https://arxiv.org/abs/2610.28706",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "METTA: Memory-Enhanced Test-Time Adaptation for Meta-Reinforcement Learning",
+      "url": "https://arxiv.org/abs/2610.31656v1",
+      "published": "2026-10-22T17:58:27Z"
     },
     {
-      "title": "Automating ML for Science: Can Frontier Agents Climb Scientific Hills in the Wild?",
-      "url": "https://arxiv.org/abs/2610.28763",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "EpiSEM-Bench: Evaluating Safety and Evidence Recovery in LLM Agents under Missing Evidence",
+      "url": "https://arxiv.org/abs/2610.31650v1",
+      "published": "2026-10-22T17:57:04Z"
     },
     {
-      "title": "Forging More Tasks into Better Harnesses: Agentic Harness Evolution via Successive Scale Racing",
-      "url": "https://arxiv.org/abs/2610.28815",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "Low-Bit N-Gram Embeddings for Language Models",
+      "url": "https://arxiv.org/abs/2610.31646v1",
+      "published": "2026-10-22T17:56:13Z"
     },
     {
-      "title": "Decision language models as affordable and rapid alternatives to LLM judges of clinical generative AI",
-      "url": "https://arxiv.org/abs/2610.28826",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "Causal Chain of Thought: Mitigating Attention Leakage via Context Isolation",
+      "url": "https://arxiv.org/abs/2610.31639v1",
+      "published": "2026-10-22T17:52:56Z"
     },
     {
-      "title": "Sketch2Sim: an end-to-end modular framework for hand-drawn circuit analysis",
-      "url": "https://arxiv.org/abs/2610.28836",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "Questioning Instrumental Convergence in RLVR: Checkpoint Evidence from OLMo-3",
+      "url": "https://arxiv.org/abs/2610.31624v1",
+      "published": "2026-10-22T17:44:41Z"
     },
     {
-      "title": "Speedrunning Relational Foundation Model Pretraining",
-      "url": "https://arxiv.org/abs/2610.28855",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "How Ground Truth Shapes Retrieval Scores: Evidence-Aware Evaluation of a Retrieval-Augmented Generation System for Breast Lesions",
+      "url": "https://arxiv.org/abs/2610.31606v1",
+      "published": "2026-10-22T17:36:14Z"
     },
     {
-      "title": "To Manipulate or Not: Opinion Dynamics in LLM Interactions",
-      "url": "https://arxiv.org/abs/2610.28875",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "Simulated Control Evals",
+      "url": "https://arxiv.org/abs/2610.31593v1",
+      "published": "2026-10-22T17:26:42Z"
     },
     {
-      "title": "Fig: Automated Multiagent Behavior Elicitor",
-      "url": "https://arxiv.org/abs/2610.28891",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "VERA: A Responsible AI Dashboard for Assessing LLM Deployments in Light of the EU AI Act",
+      "url": "https://arxiv.org/abs/2610.31588v1",
+      "published": "2026-10-22T17:23:39Z"
     },
     {
-      "title": "Hidden Messages Between Diffusion Language Model Agents: Causal Evidence for Latent Communication",
-      "url": "https://arxiv.org/abs/2610.28905",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "Would an LLM Match into a Residency? Uncertainty, Reasoning and Image Use of Open Language Models on the Spanish MIR Examination",
+      "url": "https://arxiv.org/abs/2610.31586v1",
+      "published": "2026-10-22T17:23:11Z"
     },
     {
-      "title": "DiffResearch: Accelerating Deep Research with Diffusion Language Models",
-      "url": "https://arxiv.org/abs/2610.28909",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "Who Is Sycophantic to Whom? Confident LLMs, Human Deference, and the Collapse of Trust Calibration",
+      "url": "https://arxiv.org/abs/2610.31579v1",
+      "published": "2026-10-22T17:15:59Z"
     },
     {
-      "title": "Simply Logical -- The First Three Decades",
-      "url": "https://arxiv.org/abs/2610.28912",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "What Makes a Good Unmasking Policy? A Controlled Study of Learned Unmasking in Diffusion Language Models",
+      "url": "https://arxiv.org/abs/2610.31576v1",
+      "published": "2026-10-22T17:15:04Z"
     },
     {
-      "title": "D-Skill: Distilling Teacher Knowledge through Agent Skills",
-      "url": "https://arxiv.org/abs/2610.28914",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "Social-HUMINT: An LLM-Augmented Unified Framework for Measuring Social Media Exposure",
+      "url": "https://arxiv.org/abs/2610.31573v1",
+      "published": "2026-10-22T17:13:46Z"
     },
     {
-      "title": "Back Up Before You Regret: Measuring Backup Awareness and Automating Backup in Coding Agents",
-      "url": "https://arxiv.org/abs/2610.28934",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "When to Follow the Teacher: Advantage-Based On-Policy Distillation",
+      "url": "https://arxiv.org/abs/2610.31563v1",
+      "published": "2026-10-22T17:05:21Z"
     },
     {
-      "title": "Self-Improving Agents with World Model Predictive Paths",
-      "url": "https://arxiv.org/abs/2610.28945",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "Contestable Agents for Data Governance: Recording Human Stewardship of AI-Generated Metadata Across Structured and Unstructured Systems",
+      "url": "https://arxiv.org/abs/2610.31553v1",
+      "published": "2026-10-22T16:57:01Z"
     },
     {
-      "title": "Behavior Beyond Text: Evaluating Refusal Transfer Failure in LLM Agents",
-      "url": "https://arxiv.org/abs/2610.28982",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "Beyond Causal Masks: Auditing and Localizing Hidden Future-Token Leakage in Adaptive Sequence Models",
+      "url": "https://arxiv.org/abs/2610.31522v1",
+      "published": "2026-10-22T16:34:32Z"
     },
     {
-      "title": "PerMIT: Securing Persistent Memory for LLM Agents via Machine-Checked Integrity Theorems and Scalable Community Trust",
-      "url": "https://arxiv.org/abs/2610.28987",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "Jev-DLC: Decision-Level Continual Learning from Typed Feedback",
+      "url": "https://arxiv.org/abs/2610.31521v1",
+      "published": "2026-10-22T16:33:30Z"
     },
     {
-      "title": "AgentPolicyForge: From Executable Environments to Policy Benchmarks and Adaptive Guards",
-      "url": "https://arxiv.org/abs/2610.28989",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "The Geometry of Metaphor: Probing and Steering Metaphor Representations in Large Language Models",
+      "url": "https://arxiv.org/abs/2610.31520v1",
+      "published": "2026-10-22T16:33:01Z"
     },
     {
-      "title": "An Evidence-Driven Multi-Agent Compound AI System for Head and Neck Proton Radiotherapy Planning",
-      "url": "https://arxiv.org/abs/2610.29010",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "From Prompt Rules to Golden Data Model: Production-Scale Generation of Personalized, Compliant Pharmaceutical Claims",
+      "url": "https://arxiv.org/abs/2610.31519v1",
+      "published": "2026-10-22T16:31:36Z"
     },
     {
-      "title": "GenXR-Bench: Benchmarking Coding Agents for Interactive XR Development",
-      "url": "https://arxiv.org/abs/2610.29014",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "DuoCook: An Overcooked-Inspired Benchmark for Visual Planning and Coordination",
+      "url": "https://arxiv.org/abs/2610.31511v1",
+      "published": "2026-10-22T16:26:38Z"
     },
     {
-      "title": "Inheritance as an Admission Test for LLM Prompt Merge Operators",
-      "url": "https://arxiv.org/abs/2610.29023",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "FairFRESH: A Neuro-Symbolic Framework for Fair and Explainable Household Food Recommendation",
+      "url": "https://arxiv.org/abs/2610.31506v1",
+      "published": "2026-10-22T16:23:04Z"
     },
     {
-      "title": "GRAIL: From Saliency to Semantics in Time-Series Explanation",
-      "url": "https://arxiv.org/abs/2610.29036",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "SABLE: Scalable Affine Bayesian Latent-space Exploration",
+      "url": "https://arxiv.org/abs/2610.31495v1",
+      "published": "2026-10-22T16:13:42Z"
     },
     {
-      "title": "AutoFraming: Synthesizing Dynamic Frames of C Code with LLMs",
-      "url": "https://arxiv.org/abs/2610.29046",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "Training Small Language Models for Transferable Tool Selection",
+      "url": "https://arxiv.org/abs/2610.31483v1",
+      "published": "2026-10-22T16:07:49Z"
     },
     {
-      "title": "Does Every Instance Count Equally? Order Effects in LLM Multi-Instance Processing",
-      "url": "https://arxiv.org/abs/2610.29057",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "MoG-VLM: Efficient Video Anomaly Detection through Motion-Guided Vision-Language Models",
+      "url": "https://arxiv.org/abs/2610.31478v1",
+      "published": "2026-10-22T16:03:47Z"
     },
     {
-      "title": "Context-Augmented, Session-Calibrated Blood Pressure Tracking from Photoplethysmography",
-      "url": "https://arxiv.org/abs/2610.29091",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "Adaptive Skill Granularity for Coding Agents: Runtime Routing and Macro-to-Micro Recovery",
+      "url": "https://arxiv.org/abs/2610.31461v1",
+      "published": "2026-10-22T15:55:18Z"
     },
     {
-      "title": "Same Answer, Different Reasons: Trace-Level Divergence in Multilingual Large Language Models",
-      "url": "https://arxiv.org/abs/2610.29092",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "DIAL: Steerable Language Models with Distilled Instruction-Adherence Levels",
+      "url": "https://arxiv.org/abs/2610.31438v1",
+      "published": "2026-10-22T15:34:39Z"
     },
     {
-      "title": "GRAM: Group-wise Rank-Aware Model Merging via Subspace Alignment",
-      "url": "https://arxiv.org/abs/2610.29110",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "Conservative Meta-Agent Search: Architecture Adaptation under Non-Stationarity",
+      "url": "https://arxiv.org/abs/2610.31436v1",
+      "published": "2026-10-22T15:32:06Z"
     },
     {
-      "title": "Recursive Self-Improvement on a Budget: Scoring Code Edits Before They Run",
-      "url": "https://arxiv.org/abs/2610.29121",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "PhysTrace: Interpretable Temporal Evaluation of Physical Consistency in Video Generative Models",
+      "url": "https://arxiv.org/abs/2610.31429v1",
+      "published": "2026-10-22T15:27:58Z"
     },
     {
-      "title": "StochIKM: Automated High-Fidelity Reconstruction of Individual Patient Data from Published Kaplan-Meier Curves",
-      "url": "https://arxiv.org/abs/2610.29122",
-      "published": "Thu, 22 Oct 2026 00:00:00 -0400"
+      "title": "Predictable performance is suboptimal, and what it means for model routing",
+      "url": "https://arxiv.org/abs/2610.31428v1",
+      "published": "2026-10-22T15:27:27Z"
     }
   ]
 }

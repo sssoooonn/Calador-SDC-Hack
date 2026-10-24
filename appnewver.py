@@ -1110,6 +1110,18 @@ BG_MAP = {"account": ["financ", "analyst", "risk", "audit"], "financ": ["financ"
           "law": ["ethic", "risk", "govern", "compliance"], "student": []}
 FAIR_BACKGROUNDS = ["accounting", "marketing", "engineer", "law", "computer", "other"]
 
+# 背景下拉选项：键（英文）要包含 BG_MAP 的关键词；显示文字随语言切换 (中, English, Bahasa Malaysia)
+ROLE_CHOICES = {
+    "student of accounting and finance": ("会计与金融专业学生", "Student of accounting and finance", "Pelajar perakaunan dan kewangan"),
+    "accountant / finance professional": ("会计 / 金融从业者", "Accountant / finance professional", "Akauntan / profesional kewangan"),
+    "student of computer science": ("计算机专业学生", "Student of computer science", "Pelajar sains komputer"),
+    "engineer / developer": ("工程师 / 开发者", "Engineer / developer", "Jurutera / pembangun"),
+    "marketing professional": ("市场营销从业者", "Marketing professional", "Profesional pemasaran"),
+    "business / management student": ("商科 / 管理专业学生", "Business / management student", "Pelajar perniagaan / pengurusan"),
+    "law / compliance professional": ("法律 / 合规从业者", "Law / compliance professional", "Profesional undang-undang / pematuhan"),
+    "other": ("其他", "Other", "Lain-lain"),
+}
+
 
 def skill_match(u, s):
     if u == s:
@@ -1530,7 +1542,14 @@ with tab_me:
         with box("panel", "intake"):
             col1, col2 = st.columns(2)
             with col1:
-                user_role = st.text_input(t("in_role"), "student of accounting and finance")
+                # 下拉列表：内部值为英文键（含 BG_MAP 关键词），显示文字随语言切换
+                user_role = st.selectbox(
+                    t("in_role"),
+                    list(ROLE_CHOICES),
+                    index=0,
+                    format_func=lambda k: ROLE_CHOICES[k][_IDX[LANG]],
+                    key="user_role",
+                )
                 user_skills_input = st.text_area(t("in_skills"), "Excel, ERP, Accounting, Financial Analysis")
                 cv_file = st.file_uploader(t("in_cv"), type=["pdf", "docx", "txt", "md"])
                 st.caption(t("cv_notice"))
