@@ -11,12 +11,13 @@
 
 | Resource          | Link                                                                           |
 | ----------------- | -------------------------------------------------------------------------------|
-| GitHub Repository |                                                                                |
-| Replit Project    |                                                                                |
+| GitHub Repository | https://github.com/sssooonn/Calador-SDC-Hack                                   |
+| Replit Project    | https://calador-sdc-hack.replit.app                                            |
 | Live Demo         |                                                                                |
 | RunPod Endpoint   | N/A                                                                            |
 | Slide Deck        | https://www.canva.com/design/DAHY534_36s/ZufM7Ieu6j9eMtLVq6_O7A/edit           |
 | Demo Video        |                                                                                |
+
 
 # Calador – AI Career & Skills Navigator
 
