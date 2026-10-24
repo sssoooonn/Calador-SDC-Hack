@@ -1,3 +1,25 @@
+## Team Information
+
+| Field                  | Details                                                        |
+| ---------------------- | -------------------------------------------------------------- |
+| **Team Name**          | Calador                                                        |
+| **Team Domain**        | Domain 1                                                       |
+| **SDG Track (1-17)**   | SDG 8 – Decent Work and Economic Growth                        |
+| **Team Leader**        | Soon Yen Ling                                                  |
+| **University**         | TARUMT , UTAR                                                  |
+| **Number of Members**  | 4                                                              |
+
+## Links
+
+| Resource          | Link                                                                           |
+| ----------------- | -------------------------------------------------------------------------------|
+| GitHub Repository |                                                                                |
+| Replit Project    |                                                                                |
+| Live Demo         |                                                                                |
+| RunPod Endpoint   | N/A                                                                            |
+| Slide Deck        | https://www.canva.com/design/DAHY534_36s/ZufM7Ieu6j9eMtLVq6_O7A/edit           |
+| Demo Video        |                                                                                |
+
 # Calador – AI Career & Skills Navigator
 
 A proof-of-concept web app for the **Future-Ready Workforce Domain**. It takes a user from "who I am today" to "where I can be in the AI era": profile → future skills radar → ranked future roles → reskilling pathway, with every role and skill linked to the UN SDGs.
