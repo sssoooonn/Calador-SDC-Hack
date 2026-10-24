@@ -5,26 +5,26 @@ import altair as alt
 import os, re, json, math, datetime, html, io, unicodedata
 from collections import Counter
 
-st.set_page_config(page_title="Aiversecity - AI Career Navigator", layout="wide")
+st.set_page_config(page_title="Calador - AI Career Navigator", layout="wide")
 
 DATA_FILE = "ai_jobs_market_2025_2026.csv"
 CACHE_FILE = "trends_cache.json"
 KAGGLE_URL = "https://www.kaggle.com/datasets/alitaqishah/ai-jobs-market-2025-2026-salaries"
 ARXIV_RSS = "https://rss.arxiv.org/rss/cs.AI"
 
-# [NEW] 实时招聘信号（Arbeitnow 公开 API）
+# [NEW] Live job-market signal (Arbeitnow public API)
 LIVE_JOBS_URL = "https://www.arbeitnow.com/api/job-board-api"
 LIVE_CACHE = "live_jobs_cache.json"
-LIVE_MOM_W = 0.05   # 实时占比(%)进入技能动量的权重（假设值）
-LIVE_W = 0.5        # 实时需求进入岗位排序微调的权重（假设值，只影响排序）
-LIVE_MIN = 5.0      # 技能在实时广告中占比 ≥ 此值(%) 才算“有实时需求”
+LIVE_MOM_W = 0.05   # Weight of the live share (%) in skill momentum (assumption)
+LIVE_W = 0.5        # Weight of live demand in the role-ranking fine-tune (assumption; ranking only)
+LIVE_MIN = 5.0      # A skill counts as "in live demand" when its share of live ads is >= this value (%)
 LIVE_SHARE, LIVE_N, LIVE_META, LIVE_CACHED = {}, 0, {}, True
 
-UP, DOWN, FLAT = "UP", "DOWN", "FLAT"  # 语言无关的内部状态码，显示时用 status_label() 转换
+UP, DOWN, FLAT = "UP", "DOWN", "FLAT"  # Language-independent internal status codes; converted for display by status_label()
 
 # =====================================================================
-# 多语言（中文 / English / Bahasa Malaysia）
-# 每条文字是 (中文, English, Bahasa Malaysia)
+# Multilingual text (Chinese / English / Bahasa Malaysia)
+# Each entry is (Chinese, English, Bahasa Malaysia)
 # =====================================================================
 LANGS = {"English": "en", "Bahasa Malaysia": "ms", "中文": "zh"}
 _IDX = {"zh": 0, "en": 1, "ms": 2}
@@ -33,13 +33,13 @@ LANG = "zh"
 TXT = {
     "lite": ("📶 低流量模式（不加载图表和实时抓取）", "📶 Low-bandwidth mode (no charts, no live fetch)",
              "📶 Mod jalur lebar rendah (tiada carta, tiada ambilan langsung)"),
-    "app_title": ("🚀 Aiversecity - AI 时代职业与技能导航仪", "🚀 Aiversecity – AI Career & Skills Navigator",
-                  "🚀 Aiversecity – Pemandu Kerjaya & Kemahiran Era AI"),
+    "app_title": ("🚀 Calador - AI 时代职业与技能导航仪", "🚀 Calador – AI Career & Skills Navigator",
+                  "🚀 Calador – Pemandu Kerjaya & Kemahiran Era AI"),
     "human_note": (
         "🤝 **以人为本：** 本工具是支持人类职业决策的参考工具，不会替代人的判断，也不会做出任何最终招聘、录用或晋升决定。所有结果仅供规划参考。",
         "🤝 **Human-centred:** This tool supports human career decisions. It does not replace human judgement and never makes final hiring, selection or promotion decisions. All results are for planning reference only.",
         "🤝 **Berpusatkan manusia:** Alat ini menyokong keputusan kerjaya manusia. Ia tidak menggantikan pertimbangan manusia dan tidak membuat keputusan akhir pengambilan, pemilihan atau kenaikan pangkat. Semua hasil adalah untuk rujukan perancangan sahaja."),
-    # ---- 侧边栏 ----
+    # ---- Sidebar ----
     "sb_signals": ("📊 AI 趋势信号层", "📊 AI Trend Signals", "📊 Isyarat Trend AI"),
     "sb_src1": ("① 招聘数据（开放数据集）", "① Job-market data (open dataset)", "① Data pasaran pekerjaan (set data terbuka)"),
     "sb_missing": ("未找到 {f}", "{f} not found", "{f} tidak dijumpai"),
@@ -98,7 +98,7 @@ TXT = {
     "tab_me": ("👤 个人模式", "👤 Individual mode", "👤 Mod individu"),
     "tab_team": ("👥 团队 / 批量模式（HR · 职业中心）", "👥 Team / batch mode (HR · Career centre)",
                  "👥 Mod pasukan / kelompok (HR · Pusat kerjaya)"),
-    # ---- 个人录入 ----
+    # ---- Individual input ----
     "h_intake": ("👤 你的技能画像", "👤 Your skills profile", "👤 Profil kemahiran anda"),
     "in_role": ("你当前的职业/专业背景：", "Your current job / field of study:", "Pekerjaan / bidang pengajian semasa anda:"),
     "in_skills": ("你掌握的技能（逗号分隔）：", "Your skills (comma-separated):", "Kemahiran anda (dipisahkan koma):"),
@@ -132,7 +132,7 @@ TXT = {
     "cv_none": ("CV 已读取，但没有识别到数据集中的技能关键词。", "CV read, but no skills from the dataset were detected.",
                 "CV dibaca, tetapi tiada kemahiran daripada set data dikesan."),
     "cv_fail": ("CV 读取失败：{e}", "Could not read the CV: {e}", "Gagal membaca CV: {e}"),
-    # ---- 雷达 ----
+    # ---- Radar ----
     "h_radar": ("📡 未来技能雷达", "📡 Future Skills Radar", "📡 Radar Kemahiran Masa Depan"),
     "radar_nodata": ("数据集缺少 posting_year 列，无法计算上升 / 下降趋势。",
                      "The dataset has no posting_year column, so rising/cooling trends cannot be computed.",
@@ -179,7 +179,7 @@ TXT = {
         "以下技能不在数据集的技能词表中（或样本太少），未给出趋势：{s}。这不代表它们没有价值，只是该数据集没有覆盖。",
         "These skills are not in the dataset's skill vocabulary (or have too few samples), so no trend is shown: {s}. This does not mean they lack value — the dataset simply does not cover them.",
         "Kemahiran berikut tiada dalam senarai kemahiran set data (atau sampel terlalu sedikit), jadi trend tidak ditunjukkan: {s}. Ini tidak bermakna ia tidak bernilai — set data tidak meliputinya."),
-    # ---- 匹配 ----
+    # ---- Matching ----
     "btn_run": ("🔥 生成我的未来职业匹配与再培训路径", "🔥 Generate my future-career matches & reskilling path",
                 "🔥 Jana padanan kerjaya masa depan & laluan latihan semula"),
     "h_match": ("🎯 你的岗位匹配", "🎯 Your role matches", "🎯 Padanan jawatan anda"),
@@ -244,7 +244,7 @@ TXT = {
                        "🌱 **Rantaian sumbangan SDG:** kemahiran pasukan → **{title}** → **{sdg}**\n\n- {desc}"),
     "sdg_industry": ("\n- 该岗位在数据集中最常见的行业：{s}", "\n- Most common industries for this role in the dataset: {s}",
                      "\n- Industri paling biasa untuk jawatan ini dalam set data: {s}"),
-    # ---- 再培训路径 + 激励 ----
+    # ---- Reskilling path + motivation ----
     "plan_title": ("📖 针对【{title}】的个性化再培训路径（约 {total} 小时 ≈ {weeks} 周）",
                    "📖 Personalised reskilling path for [{title}] (≈ {total} hours ≈ {weeks} weeks)",
                    "📖 Laluan latihan semula peribadi untuk [{title}] (≈ {total} jam ≈ {weeks} minggu)"),
@@ -290,7 +290,7 @@ TXT = {
         "HRD Corp e-LATiH：HRD Corp 的在线学习平台，面向个人开放，官方 FAQ 提到提供大量免费课程，另有付费课程：[FAQ](https://supportcentre.hrdcorp.gov.my/portal/en/kb/articles/faqs-hrd-corp-e-latih)。若你已在职，可请雇主查询 [HRD Corp Claimable Courses](https://hrdcorp.gov.my/hrdcorp-claimable-courses)（由雇主申请，需符合其资格条件）。课程数量与资格以官方页面为准。",
         "HRD Corp e-LATiH: HRD Corp's online learning platform, open to individuals; its official FAQ mentions many free courses plus paid ones: [FAQ](https://supportcentre.hrdcorp.gov.my/portal/en/kb/articles/faqs-hrd-corp-e-latih). If you are employed, ask your employer about [HRD Corp Claimable Courses](https://hrdcorp.gov.my/hrdcorp-claimable-courses) (claimed by the employer, subject to eligibility). Course numbers and eligibility follow the official pages.",
         "HRD Corp e-LATiH: platform pembelajaran dalam talian HRD Corp, terbuka kepada individu; FAQ rasminya menyebut banyak kursus percuma serta kursus berbayar: [FAQ](https://supportcentre.hrdcorp.gov.my/portal/en/kb/articles/faqs-hrd-corp-e-latih). Jika anda bekerja, tanya majikan tentang [HRD Corp Claimable Courses](https://hrdcorp.gov.my/hrdcorp-claimable-courses) (dituntut oleh majikan, tertakluk kepada kelayakan). Bilangan kursus dan kelayakan mengikut laman rasmi."),
-    # ---- 公平性 ----
+    # ---- Fairness ----
     "h_fair": ("⚖️ 公平性检查 (Fairness Check)", "⚖️ Fairness Check", "⚖️ Semakan Keadilan"),
     "fair_cap": (
         "系统不收集也不使用年龄、性别、种族等信息。唯一与“背景”相关的因素是职业/专业关键词（最多占 {bw}% 分数）。下面用同样的技能、换不同背景，检查分数差异。",
@@ -310,7 +310,7 @@ TXT = {
                    "Limitation: this is a simple keyword-rule check and cannot prove the dataset itself is free of bias.",
                    "Had: ini semakan peraturan kata kunci yang ringkas dan tidak dapat membuktikan set data bebas daripada bias."),
     "fair_need": ("请先输入技能后再运行公平性检查。", "Enter some skills first to run the fairness check.", "Sila masukkan kemahiran dahulu untuk menjalankan semakan keadilan."),
-    # ---- 团队 ----
+    # ---- Team ----
     "h_team": ("👥 团队 / 批量模式", "👥 Team / batch mode", "👥 Mod pasukan / kelompok"),
     "aud_label": ("你的身份", "Your role", "Peranan anda"),
     "aud_hr": ("HR / L&D 经理：规划团队再培训", "HR / L&D manager: plan team reskilling", "Pengurus HR / L&D: rancang latihan semula pasukan"),
@@ -384,7 +384,7 @@ TXT = {
     "curriculum": ("建议课程设计：优先针对上方「最常见的技能缺口」开设短课程（可对应免费资源，如 Kaggle Learn、Google MLCC）。",
                    "Suggested curriculum design: run short courses first on the most common skill gaps above (free resources such as Kaggle Learn or Google MLCC can be used).",
                    "Cadangan reka bentuk kurikulum: adakan kursus pendek dahulu untuk jurang kemahiran paling biasa di atas (boleh guna sumber percuma seperti Kaggle Learn atau Google MLCC)."),
-    # ---- 地区 SDG ----
+    # ---- Regional SDG ----
     "h_region": ("🗺️ 地区 SDG 贡献视图", "🗺️ SDG contribution by region", "🗺️ Sumbangan SDG mengikut wilayah"),
     "region": ("地区", "Region", "Wilayah"),
     "n_people": ("人数", "People", "Bilangan"),
@@ -396,7 +396,7 @@ TXT = {
     "region_cap": ("按每位成员的目标/首选岗位对应的 SDG 汇总，是概念关联，不是官方统计。",
                    "Aggregated from the SDGs linked to each member's target / top role. This is a conceptual link, not an official statistic.",
                    "Dikumpul daripada SDG yang dikaitkan dengan jawatan sasaran/teratas setiap ahli. Ini kaitan konsep, bukan statistik rasmi."),
-    # ---- SDG 覆盖 ----
+    # ---- SDG coverage ----
     "h_cov": ("🌍 17 项 SDG 覆盖总览（岗位 / 技能 / 行业应用）", "🌍 Overview of all 17 SDGs (roles / skills / industry applications)",
               "🌍 Gambaran keseluruhan 17 SDG (jawatan / kemahiran / aplikasi industri)"),
     "c_roles": ("关联岗位数", "Linked roles", "Jawatan berkaitan"),
@@ -411,7 +411,7 @@ TXT = {
                 "Pemetaan berasaskan peraturan kata kunci (laraskan ROLE_RULES / SKILL_RULES dalam kod) — kaitan konsep yang munasabah, bukan klasifikasi rasmi. SDG seperti kehidupan bawah air atau di darat mempunyai kaitan lemah dengan jawatan AI dalam set data ini, jadi ditandakan tidak diliputi dan tidak dipaksa."),
 }
 
-# [NEW] 实时招聘信号的三语文字
+# [NEW] Three-language text for the live job-market signal
 TXT.update({
     "live_title": ("实时招聘信号（自动更新，无需用户操作）", "Live job-market signal (auto-updated, no user action)",
                    "Isyarat pasaran pekerjaan langsung (dikemas kini automatik)"),
@@ -436,7 +436,7 @@ TXT.update({
 })
 
 
-# [NEW] CV 识别反馈文字（cv_none 在此覆盖为更详细的说明）
+# [NEW] CV recognition feedback text (cv_none is overridden here with a more detailed message)
 TXT.update({
     "cv_empty": ("没有从 CV 中读到任何文字。如果是扫描版 PDF（图片），系统无法识别，请改用可复制文字的 PDF、DOCX 或 TXT。",
                  "No text could be read from the CV. If it is a scanned (image) PDF the system cannot read it — please use a PDF with selectable text, a DOCX or a TXT file.",
@@ -448,7 +448,7 @@ TXT.update({
 })
 
 
-# [NEW] 潜力问卷如何影响结果
+# [NEW] How the potential questionnaire affects results
 TXT.update({
     "q_used": ("问卷如何影响结果：每周 {wh} 小时 → 学习计划最多安排 {k} 项课程，并据此估算周数；学习方式「{p}」→ {pe}；学习意愿「{g}」→ {ge}。这些规则是我们设定的假设，只影响排序和学习计划，不改变匹配度分数。",
                "How your answers are used: {wh} hours/week → the plan includes up to {k} courses and the weeks are estimated from it; learning style “{p}” → {pe}; willingness “{g}” → {ge}. These rules are our assumptions; they only affect ranking and the learning plan, never the match score.",
@@ -477,7 +477,25 @@ TXT.update({
 })
 
 
-# 极简风：去掉标题里的 emoji；趋势用 ▲ ▼ 表示
+# [NEW] Plan export
+TXT.update({
+    "dl_plan_csv": ("⬇️ 下载学习计划 CSV", "⬇️ Download plan (CSV)", "⬇️ Muat turun pelan (CSV)"),
+    "dl_plan_md": ("⬇️ 下载学习计划 Markdown", "⬇️ Download plan (Markdown)", "⬇️ Muat turun pelan (Markdown)"),
+    "ex_step": ("步骤", "Step", "Langkah"),
+    "ex_kind": ("类型", "Type", "Jenis"),
+    "ex_item": ("内容", "Item", "Item"),
+    "ex_resource": ("资源", "Resource", "Sumber"),
+    "ex_link": ("链接", "Link", "Pautan"),
+    "ex_cost": ("费用", "Cost", "Kos"),
+    "ex_hours": ("估计小时", "Estimated hours", "Anggaran jam"),
+    "ex_done": ("已完成", "Done", "Selesai"),
+    "ex_learn": ("学习", "Learn", "Belajar"),
+    "ex_project": ("实操项目", "Project", "Projek"),
+    "ex_cv": ("简历", "CV", "CV"),
+})
+
+
+# Minimalist style: strip leading emoji from titles; trends use arrows
 _ARROWS = {"📈 ": "▲ ", "📉 ": "▼ ", "➖ ": "— "}
 _EMOJI_LEAD = re.compile(r"^(\*\*)?(?:[\U0001F000-\U0001FFFF\u2600-\u27BF\uFE0F\u200d]+\s*)+")
 
@@ -501,7 +519,7 @@ def status_label(code):
 
 
 def kw_in(k, text):
-    """关键词匹配：词首必须是单词边界；3 个字符以内的短词要求完整单词（避免 'ml' 误中 'html'）。"""
+    """Keyword match: the start must be a word boundary; short words (3 characters or fewer) must match a whole word (avoids 'ml' matching inside 'html')."""
     pat = r"(?<![a-z0-9])" + re.escape(k) + (r"(?![a-z0-9])" if len(k) <= 3 else "")
     return re.search(pat, text) is not None
 
@@ -514,10 +532,10 @@ def clean(v):
 
 
 # =====================================================================
-# 外观：配色 / 字体 / CSS
+# Look and feel: colours / fonts / CSS
 # =====================================================================
 NAVY, BLUE, ORANGE, LINE = "#36425F", "#2F73B8", "#F5A33A", "#D5DCE4"
-UP_C, DOWN_C = BLUE, ORANGE   # 上升 = 蓝，下降 = 橙
+UP_C, DOWN_C = BLUE, ORANGE   # Rising = blue, falling = orange
 FONT = '"Barlow","Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif'
 DISPLAY = '"Oswald","Arial Narrow","Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif'
 
@@ -591,7 +609,7 @@ def tidy(chart):
 
 
 def box(prefix, idx=None):
-    """带 key 的白色卡片容器；旧版 Streamlit 不支持 key 时退回普通带边框容器。"""
+    """Container with a key (white card); falls back to a plain bordered container on older Streamlit versions without key support."""
     key = f"{prefix}_{idx}" if idx is not None else prefix
     try:
         return st.container(key=key)
@@ -600,10 +618,10 @@ def box(prefix, idx=None):
 
 
 def step_check(label_md, key):
-    """勾选框和文字分开放：点文字里的链接只会打开链接，不会误触勾选。"""
+    """Checkbox and text are placed separately: clicking a link in the text only opens the link and never toggles the checkbox."""
     try:
         c1, c2 = st.columns([1, 14], vertical_alignment="center")
-    except TypeError:  # 旧版 Streamlit 没有 vertical_alignment
+    except TypeError:  # Older Streamlit versions have no vertical_alignment
         c1, c2 = st.columns([1, 14])
     with c1:
         ok = st.checkbox("done", key=key, label_visibility="collapsed")
@@ -613,7 +631,7 @@ def step_check(label_md, key):
 
 
 # =====================================================================
-# AI 趋势信号层（实时来源 + 缓存兜底）
+# AI trend-signal layer (live source + cache fallback)
 # =====================================================================
 def read_cache():
     if os.path.exists(CACHE_FILE):
@@ -644,7 +662,7 @@ def fetch_live_signals():
 
 @st.cache_data(ttl=3600)
 def load_signals(lite):
-    # 低流量模式：不联网，只读本地缓存
+    # Low-bandwidth mode: no network, read the local cache only
     return read_cache() if lite else fetch_live_signals()
 
 
@@ -682,8 +700,8 @@ def trend_hits(title, signals):
     return sum(1 for sg in signals if any(k in sg["title"].lower() for k in kws))
 
 
-# ---- 技能动量：招聘份额变化 + arXiv 研究热度 + 实时招聘占比 ----
-HEAT_W = 0.1  # 研究热度的权重（假设值，可调）
+# ---- Skill momentum: job-share change + arXiv research heat + live job share ----
+HEAT_W = 0.1  # Weight of research heat (assumption, adjustable)
 SKILL_SYN = {
     "llm": ["llm", "language model"], "prompt": ["prompt"],
     "nlp": ["nlp", "natural language"], "vision": ["vision", "image"],
@@ -704,7 +722,7 @@ def _hit(kw, text):
 
 
 def skill_heat(skill, signals):
-    """某技能在最新 arXiv 论文标题里出现的篇数"""
+    """Number of the latest arXiv paper titles that mention the skill"""
     if not signals:
         return 0
     s = skill.lower()
@@ -716,7 +734,7 @@ def skill_heat(skill, signals):
 
 
 def skill_momentum(skill, skill_df, signals):
-    """返回 (动量分, 招聘份额变化pp, 论文篇数)"""
+    """Returns (momentum score, change in job share in pp, number of papers)"""
     shift = 0.0
     if skill_df is not None:
         hit = skill_df[skill_df["skill"] == skill]
@@ -725,12 +743,12 @@ def skill_momentum(skill, skill_df, signals):
     n = len(signals) if signals else 0
     h = skill_heat(skill, signals)
     pct = h / n * 100 if n else 0.0
-    # [CHANGED] 加入实时招聘占比
+    # [CHANGED] Add the live job share
     return shift + HEAT_W * pct + LIVE_MOM_W * LIVE_SHARE.get(skill, 0.0), shift, h
 
 
 # =====================================================================
-# 招聘数据（Kaggle）
+# Job-market data (Kaggle)
 # =====================================================================
 def find_col(df, candidates):
     for c in candidates:
@@ -746,7 +764,7 @@ def split_skills(s):
 
 
 def data_period(raw):
-    """数据集本身覆盖的招聘时间（不是文件上传日期）"""
+    """Posting period covered by the dataset itself (not the file upload date)"""
     col = find_col(raw, ["posting_date", "date_posted", "posted_date", "date"])
     if col:
         d = pd.to_datetime(raw[col], errors="coerce").dropna()
@@ -792,7 +810,7 @@ def load_data():
 
 
 # =====================================================================
-# 未来技能雷达：用数据集 2025 vs 2026 的招聘占比变化判断上升 / 下降
+# Future Skills Radar: rising / cooling from the change in share of postings, dataset 2025 vs 2026
 # =====================================================================
 def trend_status(v, thr):
     if v >= thr:
@@ -851,7 +869,7 @@ def diverging_bar(df, cat, val, height=None):
 
 
 def show_chart(make_chart, table_df):
-    """低流量模式下用表格代替图表。"""
+    """In low-bandwidth mode a table replaces the chart."""
     if LITE:
         st.dataframe(table_df, use_container_width=True, hide_index=True)
     else:
@@ -925,11 +943,11 @@ def render_radar(role_df, skill_df, meta, user_skills, signals=None):
 
 
 # =====================================================================
-# CV 上传 -> 提取文字 -> 识别技能
+# CV upload -> extract text -> detect skills
 # =====================================================================
 def extract_cv_text(uploaded):
     name = uploaded.name.lower()
-    data = uploaded.getvalue()  # 每次从头读，避免 Streamlit 重跑时文件指针已在末尾
+    data = uploaded.getvalue()  # Always read from the start; on a Streamlit rerun the file pointer may already be at the end
     try:
         if name.endswith(".txt") or name.endswith(".md"):
             return data.decode("utf-8", errors="ignore")
@@ -940,7 +958,7 @@ def extract_cv_text(uploaded):
             import docx
             d = docx.Document(io.BytesIO(data))
             parts = [p.text for p in d.paragraphs]
-            for tb in d.tables:  # 很多 CV 把技能放在表格里
+            for tb in d.tables:  # Many CVs put skills in tables
                 for r in tb.rows:
                     for c in r.cells:
                         parts.append(c.text)
@@ -951,7 +969,7 @@ def extract_cv_text(uploaded):
 
 
 def _norm(s):
-    """统一写法：全角转半角、小写、标点换成空格、合并空白（让换行 / 连字符 / 项目符号不影响匹配）。"""
+    """Normalise text: full-width to half-width, lowercase, punctuation to spaces, collapse whitespace (so line breaks / hyphens / bullets do not affect matching)."""
     s = unicodedata.normalize("NFKC", str(s)).lower()
     s = re.sub(r"[^\w+#.]+", " ", s)
     return re.sub(r"\s+", " ", s).strip()
@@ -970,7 +988,7 @@ def detect_skills(text, vocab):
 
 
 # =====================================================================
-# SDG 映射：完整 17 项（中 / English / Bahasa Malaysia）
+# SDG mapping: all 17 goals (Chinese / English / Bahasa Malaysia)
 # =====================================================================
 SDG_NAMES = {
     1: ("SDG 1 无贫穷", "SDG 1 No Poverty", "SDG 1 Tiada Kemiskinan"),
@@ -997,7 +1015,7 @@ def sdg_name(n):
     return SDG_NAMES[n][_IDX[LANG]]
 
 
-# 岗位规则：按顺序匹配第一条 (关键词, SDG, (中, en, ms 说明))
+# Role rules: first match wins (keywords, SDGs, (zh, en, ms description))
 ROLE_RULES = [
     (["ethic"], [16, 10], ("让 AI 公平、透明、负责任，减少算法带来的不平等",
                            "Making AI fair, transparent and accountable, reducing algorithmic inequality",
@@ -1102,7 +1120,7 @@ def render_sdg_coverage(jobs_df, vocab):
 
 
 def render_region_sdg(pairs):
-    """pairs: [(region, role_title), ...] —— 按地区汇总 SDG 贡献"""
+    """pairs: [(region, role_title), ...] -- aggregate SDG contributions by region"""
     st.subheader(t("h_region"))
     if not any(r for r, _ in pairs):
         st.caption(t("region_hint"))
@@ -1121,15 +1139,32 @@ def render_region_sdg(pairs):
 
 
 # =====================================================================
-# 免费/低成本学习资源
+# Free / low-cost learning resources
+# [CHANGED] Expanded list. First match wins, so specific entries come before generic ones.
+# NOTE: open every link before submitting; hours are rough estimates.
 # =====================================================================
 RESOURCES = [
     (["python"], "Kaggle Learn · Python", "https://www.kaggle.com/learn/python", "c_free", 5),
+    (["visualization", "visualisation", "tableau", "power bi", "dashboard"], "Kaggle Learn · Data Visualization",
+     "https://www.kaggle.com/learn/data-visualization", "c_free", 4),
+    (["data cleaning", "data wrangling", "etl"], "Kaggle Learn · Data Cleaning", "https://www.kaggle.com/learn/data-cleaning", "c_free", 4),
+    (["feature engineering"], "Kaggle Learn · Feature Engineering", "https://www.kaggle.com/learn/feature-engineering", "c_free", 5),
+    (["statistic", "probability"], "Khan Academy · Statistics and probability",
+     "https://www.khanacademy.org/math/statistics-probability", "c_free", 20),
     (["pandas", "data analysis", "analytics", "data"], "Kaggle Learn · Pandas", "https://www.kaggle.com/learn/pandas", "c_free", 4),
     (["sql", "database"], "Kaggle Learn · Intro to SQL", "https://www.kaggle.com/learn/intro-to-sql", "c_free", 4),
-    (["machine learning", "ml", "deep learning", "tensorflow", "pytorch", "model"], "Google · Machine Learning Crash Course",
+    (["git", "github", "version control"], "Pro Git (free online book)", "https://git-scm.com/book/en/v2", "c_free", 6),
+    (["docker", "container"], "Docker · Get started", "https://docs.docker.com/get-started/", "c_free", 4),
+    (["computer vision", "vision", "opencv", "image"], "Kaggle Learn · Computer Vision", "https://www.kaggle.com/learn/computer-vision", "c_free", 4),
+    (["nlp", "natural language", "transformer", "hugging face"], "Hugging Face · NLP Course",
+     "https://huggingface.co/learn/nlp-course", "c_free", 12),
+    (["deep learning", "neural", "tensorflow", "keras"], "Kaggle Learn · Intro to Deep Learning",
+     "https://www.kaggle.com/learn/intro-to-deep-learning", "c_free", 4),
+    (["pytorch"], "fast.ai · Practical Deep Learning", "https://course.fast.ai/", "c_free", 20),
+    (["machine learning", "ml", "model"], "Google · Machine Learning Crash Course",
      "https://developers.google.com/machine-learning/crash-course", "c_free", 15),
-    (["llm", "prompt", "generative", "nlp", "language"], "DeepLearning.AI · Short Courses", "https://www.deeplearning.ai/short-courses/", "c_mostly", 3),
+    (["fairness", "bias"], "Kaggle Learn · Intro to AI Ethics", "https://www.kaggle.com/learn/intro-to-ai-ethics", "c_free", 4),
+    (["llm", "prompt", "generative", "language"], "DeepLearning.AI · Short Courses", "https://www.deeplearning.ai/short-courses/", "c_mostly", 3),
     (["ethic", "risk", "govern", "compliance", "privacy", "policy", "safety"], "Elements of AI (includes AI ethics)", "https://www.elementsofai.com/", "c_free", 30),
     (["product", "strategy", "management", "communication"], "Coursera · AI For Everyone", "https://www.coursera.org/learn/ai-for-everyone", "c_audit", 6),
 ]
@@ -1144,26 +1179,26 @@ def pick_resource(skill):
 
 
 def no_resource_skills(skills):
-    """没有匹配资源的技能：如实列出，不编造课程。"""
+    """Skills with no matching resource: listed honestly, no course is made up."""
     return [s for s in skills if pick_resource(s) is None]
 
 
-# 潜力问卷 → 规则（均为我们设定的假设）
+# Questionnaire -> rules (all are our own assumptions)
 STRUCTURED_RES = {"Google · Machine Learning Crash Course", "Elements of AI (includes AI ethics)",
                   "Coursera · AI For Everyone", "DeepLearning.AI · Short Courses"}
-MIND_TREND_W = {"mind_1": 0.5, "mind_2": 1.0, "mind_3": 1.5}  # 学习意愿 → 趋势信号在岗位排序中的权重
+MIND_TREND_W = {"mind_1": 0.5, "mind_2": 1.0, "mind_3": 1.5}  # Willingness -> weight of trend signals in role ranking
 
 
 def plan_size(weekly_hours, mind="mind_2"):
-    """每周可学时间越少，计划里的课程越少；学习意愿很高再多加 1 项。"""
+    """The fewer hours per week, the fewer courses in the plan; very high willingness adds 1 more."""
     k = 2 if weekly_hours <= 4 else (3 if weekly_hours < 10 else 4)
     return k + (1 if mind == "mind_3" else 0)
 
 
 def build_plan(missing, weekly_hours, skill_df=None, signals=None, pref=None, mind="mind_2", max_skills=3):
-    """默认按动量排序：招聘份额上升 + arXiv 研究热度 + 实时需求高的技能优先。
-    pref（self / proj / course）调整资源顺序和项目时长；mind=mind_1 时改为先补用时短的技能。
-    找不到资源的技能不会被硬配课程；steps 可能为空。pref=None 时保持原行为（团队模式用）。"""
+    """By default skills are ordered by momentum: rising job share + arXiv research heat + live demand.
+    pref (self / proj / course) adjusts resource order and project length; mind=mind_1 puts the skills that take less time first.
+    Skills with no matching resource are never given an invented course; steps may be empty. With pref=None the original behaviour is kept (used by team mode)."""
     order = list(missing)
     if mind == "mind_1":
         order.sort(key=lambda s: ((pick_resource(s) or (None, None, None, 99))[3],
@@ -1176,7 +1211,7 @@ def build_plan(missing, weekly_hours, skill_df=None, signals=None, pref=None, mi
         if r and r[0] not in seen:
             seen.add(r[0])
             cands.append((sk, *r))
-    # c = (skill, name, url, cost, hours)；sort 是稳定排序，同一偏好内保持上面的顺序
+    # c = (skill, name, url, cost, hours); sort is stable, so the order above is kept within the same preference
     if pref == "self":
         cands.sort(key=lambda c: 0 if c[3] == "c_free" else 1)
     elif pref == "course":
@@ -1191,10 +1226,42 @@ def build_plan(missing, weekly_hours, skill_df=None, signals=None, pref=None, mi
     return steps, total, weeks, project_hours, cv_hours
 
 
+# [NEW] Export the reskilling plan (CSV / Markdown). Row order matches the on-screen checklist.
+def plan_to_df(title, steps, ph, cvh, learn_pref, done_flags):
+    proj = (t("ex_project"), title, "Kaggle public datasets + GitHub", "https://www.kaggle.com/datasets", t("c_free"), ph)
+    cv = (t("ex_cv"), "CV", "", "", "", cvh)
+    learn = [(t("ex_learn"), sk, name, url, t(cost), hrs) for sk, name, url, cost, hrs in steps]
+    seq = ([proj] + learn if learn_pref == "proj" else learn + [proj]) + [cv]
+    rows = []
+    for i, (k, it, rs, u, c, h) in enumerate(seq, 1):
+        done = i - 1 < len(done_flags) and done_flags[i - 1]
+        rows.append({t("ex_step"): i, t("ex_kind"): k, t("ex_item"): it, t("ex_resource"): rs, t("ex_link"): u,
+                     t("ex_cost"): c, t("ex_hours"): h, t("ex_done"): t("yes") if done else t("no")})
+    return pd.DataFrame(rows)
+
+
+def plan_to_md(title, df, total, weeks, weekly_hours, nores):
+    lines = [f"# {title}", "", t("plan_time", total=total, wh=weekly_hours, weeks=weeks), ""]
+    for _, r in df.iterrows():
+        res, url = r[t("ex_resource")], r[t("ex_link")]
+        name = f"[{res}]({url})" if url else res
+        parts = [f"{r[t('ex_step')]}. {r[t('ex_kind')]}: {r[t('ex_item')]}"]
+        if res:
+            parts.append(name)
+        if r[t("ex_cost")]:
+            parts.append(str(r[t("ex_cost")]))
+        parts.append(f"{r[t('ex_hours')]}h")
+        lines.append(" · ".join(parts))
+    if nores:
+        lines += ["", t("plan_nores", s=", ".join(nores))]
+    lines += ["", f"_{t('plan_note')}_"]
+    return "\n".join(lines)
+
+
 # =====================================================================
-# 匹配引擎（个人 / 团队共用）
+# Matching engine (shared by individual and team modes)
 # =====================================================================
-SDG_W = 5  # 每个与用户所选 SDG 重合的项，在排序中加几分（假设值，只影响排序）
+SDG_W = 5  # Points added to the ranking for each overlap with the user's chosen SDGs (assumption; ranking only)
 
 BG_MAP = {"account": ["financ", "analyst", "risk", "audit"], "financ": ["financ", "analyst", "risk"],
           "engineer": ["engineer", "developer", "ml", "machine"], "computer": ["engineer", "developer", "data", "machine"],
@@ -1202,7 +1269,7 @@ BG_MAP = {"account": ["financ", "analyst", "risk", "audit"], "financ": ["financ"
           "law": ["ethic", "risk", "govern", "compliance"], "student": []}
 FAIR_BACKGROUNDS = ["accounting", "marketing", "engineer", "law", "computer", "other"]
 
-# 背景下拉选项：键（英文）要包含 BG_MAP 的关键词；显示文字随语言切换 (中, English, Bahasa Malaysia)
+# Background dropdown options: keys (English) must contain BG_MAP keywords; display text follows the language (zh, English, Bahasa Malaysia)
 ROLE_CHOICES = {
     "student of accounting and finance": ("会计与金融专业学生", "Student of accounting and finance", "Pelajar perakaunan dan kewangan"),
     "accountant / finance professional": ("会计 / 金融从业者", "Accountant / finance professional", "Akauntan / profesional kewangan"),
@@ -1214,7 +1281,6 @@ ROLE_CHOICES = {
     "other": ("其他", "Other", "Lain-lain"),
 }
 
-
 def skill_match(u, s):
     if u == s:
         return True
@@ -1225,8 +1291,8 @@ def skill_match(u, s):
 
 
 def match_roles(user_skills, user_role, jobs_df, signals=None, role_shift=None, bg_w=10, pref_sdgs=None, trend_w=1.0):
-    """匹配度 = (100-bg_w)% × 技能覆盖率 + bg_w% × 背景相关度。
-    趋势加权（雷达份额变化 + arXiv 热度 + 实时招聘需求）和 SDG 偏好加权只进入 rank_score 用于排序，不改变匹配度分数。"""
+    """Match score = (100-bg_w)% x skill coverage + bg_w% x background relevance.
+    Trend weighting (radar share change + arXiv heat + live job demand) and SDG-preference weighting only enter rank_score for ordering and never change the match score."""
     results = []
     role_text = (user_role or "").lower()
     role_shift = role_shift or {}
@@ -1243,9 +1309,9 @@ def match_roles(user_skills, user_role, jobs_df, signals=None, role_shift=None, 
         hits = trend_hits(row["job_title"], signals)
         trend_b = (float(np.clip(role_shift.get(row["job_title"], 0.0) * 3, -3, 3)) + min(hits, 3) * 0.5
                    + min(sum(1 for s in req if skill_heat(s, signals) > 0), 4) * 0.5)
-        # [NEW] 实时招聘需求：所需技能中有多少在实时广告里占比 ≥ LIVE_MIN（最多计 4 个）
+        # [NEW] Live job demand: how many required skills have a live-ad share >= LIVE_MIN (at most 4 counted)
         trend_b += LIVE_W * min(sum(1 for s in req if LIVE_SHARE.get(s, 0.0) >= LIVE_MIN), 4)
-        trend_b *= trend_w  # [NEW] 学习意愿：越愿意学新技术，趋势信号在排序中越重要
+        trend_b *= trend_w  # [NEW] Willingness: the more willing to learn new tech, the more trend signals matter in ranking
         sdg_hit = sorted(set(role_sdg(row["job_title"])[0]) & set(pref_sdgs or []))
         sdg_b = SDG_W * len(sdg_hit)
         results.append({**row.to_dict(), "matched": matched, "missing": missing, "coverage": coverage,
@@ -1256,7 +1322,7 @@ def match_roles(user_skills, user_role, jobs_df, signals=None, role_shift=None, 
 
 
 def base_top(res, n=3):
-    """不含趋势信号的排序（但保留用户的 SDG 偏好），用来对比“重新规划”前后的变化。"""
+    """Ranking without trend signals (but keeping the user's SDG preference), used to compare before / after re-planning."""
     tmp = res.assign(_base=res["match_score"] + res["sdg_bonus"])
     return tmp.sort_values(["_base", "match_score", "postings"], ascending=False)["job_title"].head(n).tolist()
 
@@ -1286,7 +1352,7 @@ def render_fairness(user_skills, jobs_df, bg_w):
 
 
 # =====================================================================
-# 团队 / 批量模式（HR·L&D、TVET·大学职业中心）
+# Team / batch mode (HR / L&D, TVET / university career centre)
 # =====================================================================
 TEMPLATE_CSV = ("name,background,skills,region\nMember A,accounting,Excel; ERP; Accounting,Selangor\n"
                 "Member B,marketing,Communication; Excel; Product Strategy,Penang\n")
@@ -1366,7 +1432,7 @@ def render_team_mode(jobs_df, role_df, skill_df, signals, bg_w):
         per_member.append((m, res))
 
     if audience == opt_hr:
-        # ---- HR：针对一个目标岗位做团队技能缺口分析 ----
+        # ---- HR: team skills-gap analysis for one target role ----
         top1 = Counter(res.iloc[0]["job_title"] for _, res in per_member)
         titles = sorted(jobs_df["job_title"])
         default_title = top1.most_common(1)[0][0]
@@ -1405,7 +1471,7 @@ def render_team_mode(jobs_df, role_df, skill_df, signals, bg_w):
             y=alt.Y("skill:N", sort="-x", title=None),
             tooltip=["skill", "coverage"]).properties(height=max(200, 26 * len(cov_df))), cov_df)
 
-        # ---- 技能缺口热力图（成员 × 技能） ----
+        # ---- Skills-gap heatmap (member x skill) ----
         st.subheader(t("heat_title"))
         heat_df = pd.DataFrame(heat_rows)
         order = [c["skill"] for c in sorted(cov, key=lambda c: -c["coverage"])]
@@ -1433,7 +1499,7 @@ def render_team_mode(jobs_df, role_df, skill_df, signals, bg_w):
         st.caption(t("team_cap"))
 
     else:
-        # ---- 职业中心：学生群体画像 ----
+        # ---- Career centre: student cohort profile ----
         rows, top1_counter, gap_counter, sdg_counter, pairs = [], Counter(), Counter(), Counter(), []
         for m, res in per_member:
             top3 = res.head(3)
@@ -1476,7 +1542,7 @@ def render_team_mode(jobs_df, role_df, skill_df, signals, bg_w):
 
 
 # =====================================================================
-# [NEW] 实时招聘信号（Arbeitnow 公开 API；失败或低流量模式时用本地缓存）
+# [NEW] Live job-market signal (Arbeitnow public API; falls back to the local cache on failure or in low-bandwidth mode)
 # =====================================================================
 def read_live_cache():
     if os.path.exists(LIVE_CACHE):
@@ -1494,7 +1560,7 @@ def fetch_live_jobs():
     try:
         items, stamps = [], []
         for page in (1, 2, 3):
-            req = urllib.request.Request(f"{LIVE_JOBS_URL}?page={page}", headers={"User-Agent": "Aiversecity-demo/1.0"})
+            req = urllib.request.Request(f"{LIVE_JOBS_URL}?page={page}", headers={"User-Agent": "Calador-demo/1.0"})
             with urllib.request.urlopen(req, timeout=10) as r:
                 data = json.loads(r.read().decode("utf-8")).get("data", [])
             if not data:
@@ -1527,7 +1593,7 @@ def load_live_jobs(lite):
 
 @st.cache_data(ttl=3600)
 def live_skill_share(items, vocab_t):
-    """每个技能被多少 % 的实时广告提到（至少 3 条才计入，避免噪音）。"""
+    """Percentage of live ads that mention each skill (counted only if at least 3 ads mention it, to avoid noise)."""
     if not items:
         return {}, 0
     cnt = Counter()
@@ -1559,7 +1625,7 @@ def render_live_panel(skill_df):
 
 
 # =====================================================================
-# 页面开始（侧边栏：语言、低流量模式放最前面）
+# Page start (sidebar: language and low-bandwidth mode first)
 # =====================================================================
 lang_name = st.sidebar.selectbox("Language / 语言 / Bahasa", list(LANGS), index=0, key="lang")
 LANG = LANGS[lang_name]
@@ -1568,13 +1634,13 @@ inject_css(LITE)
 
 raw_df, jobs_df, vocab = load_data()
 signals, fetched_at, from_cache = load_signals(LITE)
-# [NEW] 实时招聘信号
+# [NEW] Live job-market signal
 live_items, LIVE_META, LIVE_CACHED = load_live_jobs(LITE)
 LIVE_SHARE, LIVE_N = live_skill_share(live_items, tuple(sorted(vocab))) if vocab else ({}, 0)
 role_df, skill_df, trend_meta = compute_trends(raw_df) if raw_df is not None else (None, None, {})
 role_shift = dict(zip(role_df["role"], role_df["shift_pp"])) if role_df is not None else {}
 
-# ---------- 侧边栏：AI 披露常驻，其余收进折叠面板 ----------
+# ---------- Sidebar: AI disclosure always visible, the rest in collapsible panels ----------
 with st.sidebar.container(border=True):
     st.markdown(f"**{t('sb_disc_title')}**")
     st.markdown(t("sb_disc"))
@@ -1607,10 +1673,10 @@ with st.sidebar.expander(t("sb_assump")):
     spread = st.slider(t("spread"), 10, 60, 30)
 BG_W = 0 if skills_only else 10
 
-# ---------- 顶部 hero ----------
+# ---------- Top hero ----------
 _pts = "".join(f"<span>{html.escape(x)}</span>" for x in t("hero_pts").split("|"))
 st.markdown(
-    f'<div class="hero"><h1>Aiversecity</h1><p class="sub">{html.escape(t("app_sub"))}</p>'
+    f'<div class="hero"><h1>Calador</h1><p class="sub">{html.escape(t("app_sub"))}</p>'
     f'<div class="pts">{_pts}</div>'
     f'<small>Future-Ready Workforce Domain | Empowering Humans in the AI Era</small></div>',
     unsafe_allow_html=True)
@@ -1629,13 +1695,13 @@ tab_me, tab_team = st.tabs([t("tab_me"), t("tab_team")])
 with tab_me:
     sub_path, sub_trend, sub_trust = st.tabs([t("sub_path"), t("sub_trend"), t("sub_trust")])
 
-    # ======================= 我的路径 =======================
+    # ======================= My path =======================
     with sub_path:
         st.header(t("h_intake"))
         with box("panel", "intake"):
             col1, col2 = st.columns(2)
             with col1:
-                # 下拉列表：内部值为英文键（含 BG_MAP 关键词），显示文字随语言切换
+                # Dropdown: the internal value is the English key (contains BG_MAP keywords); the display text follows the language
                 user_role = st.selectbox(
                     t("in_role"),
                     list(ROLE_CHOICES),
@@ -1649,7 +1715,7 @@ with tab_me:
             with col2:
                 st.markdown(t("q_title"))
                 weekly_hours = st.slider(t("q_hours"), 2, 20, 5)
-                # 内部用语言无关的代码（self / proj / course；mind_1/2/3），显示文字随语言切换
+                # Internal codes are language-independent (self / proj / course; mind_1/2/3); the display text follows the language
                 learn_pref = st.selectbox(t("q_pref"), ["self", "proj", "course"],
                                           format_func=lambda k: t("pref_" + k), key="learn_pref")
                 growth_mindset = st.select_slider(t("q_mind"), ["mind_1", "mind_2", "mind_3"], value="mind_2",
@@ -1672,7 +1738,7 @@ with tab_me:
 
         st.markdown("---")
 
-        # 点击一次后用 session_state 记住，之后切换岗位 / 勾选进度都不会让结果消失
+        # Remember the click in session_state so results do not disappear when switching roles / ticking progress
         if st.button(t("btn_run"), type="primary"):
             st.session_state["run"] = True
 
@@ -1689,7 +1755,7 @@ with tab_me:
             if pref_sdgs:
                 st.caption(t("sdg_pref_on", w=SDG_W))
 
-            # 自动重新规划：对比"不含趋势信号"和"含趋势信号"的推荐
+            # Automatic re-planning: compare recommendations without vs with trend signals
             before, after = base_top(res_all), top["job_title"].tolist()
             if before != after:
                 st.info(t("replan_changed", old=" → ".join(before), new=" → ".join(after)))
@@ -1701,7 +1767,7 @@ with tab_me:
             for tt in top["job_title"]:
                 chosen_sdgs.update(role_sdg(tt)[0])
 
-            # 一次只看一个岗位：前三名用单选切换
+            # One role at a time: switch between the top three with a radio
             labels = [f"{r['job_title']}  ({r['match_score']}%)" for _, r in top.iterrows()]
             pick = st.radio(t("pick_role"), labels, horizontal=True, key="role_pick")
             rank = labels.index(pick) if pick in labels else 0
@@ -1730,7 +1796,7 @@ with tab_me:
                 if row["sdg_hit"]:
                     st.caption(t("sdg_match", s=", ".join(sdg_name(n) for n in row["sdg_hit"])))
 
-            # ---- 再培训路径 + 学习进度与徽章 ----
+            # ---- Reskilling path + progress & badges ----
             steps, total, weeks, ph, cvh = build_plan(row["missing"], weekly_hours, skill_df, signals,
                                                       pref=learn_pref, mind=growth_mindset,
                                                       max_skills=plan_size(weekly_hours, growth_mindset))
@@ -1787,10 +1853,19 @@ with tab_me:
                 if n_done == n_all:
                     badges.append(t("badge_ready"))
                 st.write("  \n".join(badges) if badges else t("badge_none"))
+
+                # [NEW] Export the plan (same order and done-status as the checklist above)
+                _df = plan_to_df(title, steps, ph, cvh, learn_pref, done_flags)
+                d1, d2 = st.columns(2)
+                d1.download_button(t("dl_plan_csv"), _df.to_csv(index=False).encode("utf-8-sig"),
+                                   file_name="reskilling_plan.csv", mime="text/csv", key=f"dlcsv_{title}")
+                d2.download_button(t("dl_plan_md"), plan_to_md(title, _df, total, weeks, weekly_hours, nores).encode("utf-8"),
+                                   file_name="reskilling_plan.md", mime="text/markdown", key=f"dlmd_{title}")
+
                 st.caption(t("plan_note"))
                 st.markdown(t("hrd"))
 
-            # ---- 次要信息（与上面的 expander 同级；Streamlit 不允许 expander 嵌套）----
+            # ---- Secondary info (sibling of the expander above; Streamlit does not allow nested expanders) ----
             with st.expander(t("why_h")):
                 st.caption(t("score_break", c=row['coverage'] * 100, cw=100 - BG_W,
                              b=t("yes") if row['bg'] else t("no"), bw=BG_W, tb=row['trend_bonus']))
@@ -1819,12 +1894,12 @@ with tab_me:
             top_sdg = ", ".join(sdg_name(n) for n, _ in chosen_sdgs.most_common(3) if n in SDG_NAMES)
             st.markdown(t("sdg_overall", s=top_sdg))
 
-    # ======================= 市场趋势 =======================
+    # ======================= Market trends =======================
     with sub_trend:
         render_radar(role_df, skill_df, trend_meta, user_skills, signals)
         render_live_panel(skill_df)  # [NEW]
 
-    # ======================= 公平与来源 =======================
+    # ======================= Fairness & sources =======================
     with sub_trust:
         render_fairness(user_skills, jobs_df, BG_W)
         render_sdg_coverage(jobs_df, vocab)
