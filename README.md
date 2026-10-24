@@ -16,7 +16,7 @@
 | Live Demo         | https://calador-sdc-hack.replit.app                                                                               |
 | RunPod Endpoint   | N/A                                                                            |
 | Slide Deck        | https://www.canva.com/design/DAHY534_36s/ZufM7Ieu6j9eMtLVq6_O7A/edit           |
-| Demo Video        |                                                                                |
+| Demo Video        | https://youtu.be/jjFTDasYDTI                                                                               |
 
 
 # Calador – AI Career & Skills Navigator
